@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>エッジ検定ボード</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -248,6 +249,43 @@ table.list{border-collapse:collapse;width:100%;font-size:12.5px;min-width:560px}
 .doc table{border-collapse:collapse;width:100%;font-size:13px}
 .doc td,.doc th{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
 .doc th{font-weight:500;color:var(--muted);font-size:12px}
+/* market */
+.useg{display:inline-flex;border:1px solid var(--axis);border-radius:999px;overflow:hidden;flex-wrap:wrap}
+.useg button{border:0;background:transparent;padding:7px 16px;font-size:13px;cursor:pointer;color:var(--ink-2)}
+.useg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.useg button .num{font-size:11.5px;opacity:.75;margin-left:6px}
+table.mt{border-collapse:collapse;width:100%;min-width:760px;font-size:13px}
+.mt th{font-weight:500;color:var(--muted);font-size:12px;text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:bottom;line-height:1.35}
+.mt th:first-child,.mt td:first-child{text-align:left}
+.mt td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mt td:first-child{font-family:var(--f-body);white-space:normal;min-width:220px}
+.mt tr.rrow{cursor:pointer}
+.mt tr.rrow:hover td{background:var(--bg)}
+.mt tr.rrow.open td{background:var(--accent-soft)}
+.mt td .fm{display:block;font-size:11px;color:var(--muted)}
+.mt td.exp{background:var(--bg);text-align:left;white-space:normal;font-family:var(--f-body);padding:14px}
+.vbar{display:inline-grid;grid-template-columns:52px 34px;gap:6px;align-items:center}
+.vbar i{display:block;height:6px;border-radius:3px;background:var(--line);position:relative;overflow:hidden}
+.vbar i b{position:absolute;left:0;top:0;bottom:0;background:var(--ink-2);border-radius:3px}
+.pill{display:inline-block;min-width:54px;padding:1px 8px;border-radius:4px;text-align:right}
+.expgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px}
+@media (max-width:820px){.expgrid{grid-template-columns:minmax(0,1fr)}}
+.kv{display:grid;grid-template-columns:auto auto;gap:4px 14px;font-size:12.5px;align-content:start}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--f-num);text-align:right}
+.finder{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.finder .field{min-width:0}
+.finder .grow{flex:1 1 240px}
+.finder input[type=search]{width:100%;font:inherit;font-size:14px;padding:7px 12px;border:1px solid var(--axis);border-radius:999px;background:var(--bg);color:var(--ink)}
+.finder select{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--axis);border-radius:var(--r);background:var(--bg);color:var(--ink);max-width:100%}
+table.st{border-collapse:collapse;width:100%;min-width:680px;font-size:13px}
+.st th{font-weight:500;color:var(--muted);font-size:12px;text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.st td{padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.st td.n{font-family:var(--f-num);font-variant-numeric:tabular-nums;text-align:right}
+.st th.n{text-align:right}
+.st tr{cursor:pointer}
+.st tbody tr:hover td{background:var(--bg)}
+.st tr.sel td{background:var(--accent-soft)}
+.st .cd{font-family:var(--f-num);color:var(--ink-2)}
 footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;display:grid;gap:6px;margin-top:44px}
 @media (prefers-reduced-motion:no-preference){.fr,.cell,.tab,.fam{transition:background-color .12s,box-shadow .12s}}
 </style>
@@ -256,7 +294,8 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
   <div class="top-in">
     <div class="brand">エッジ検定ボード<small id="gen-s"></small></div>
     <nav class="views" aria-label="画面">
-      <a href="#results" data-v="results">結果</a>
+      <a href="#market" data-v="market">市場全体</a>
+      <a href="#results" data-v="results">6銘柄の詳細</a>
       <a href="#sim" data-v="sim">シミュレーター</a>
       <a href="#rules" data-v="rules">ルール辞典</a>
       <a href="#manual" data-v="manual">説明書</a>
@@ -265,6 +304,51 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 </header>
 
 <div class="wrap">
+<!-- ===================== 市場全体 ===================== -->
+<main class="view" id="v-market" hidden>
+  <header class="hero">
+    <div class="eyebrow" id="mk-gen"></div>
+    <h1>全銘柄に当てても<br>効くルールはあるか</h1>
+    <p class="lead" id="mk-lead"></p>
+    <div class="useg" role="group" aria-label="銘柄の範囲" id="mk-u"></div>
+    <div class="funnel" id="mk-funnel"></div>
+    <div class="finding" id="mk-finding"></div>
+  </header>
+
+  <section class="sec" aria-labelledby="h-mk-rules">
+    <div class="sec-head">
+      <h2 id="h-mk-rules">ルール別・市場全体の検定</h2>
+      <p>銘柄を1つずつ数えると、同じ日に一斉に動く銘柄を何度も数えてしまいます。そこで日ごとに「その日シグナルが出た銘柄の平均」を1つの値にまとめてから検定しています。「同じ日の他銘柄との差」は、同じ日にシグナルが出なかった銘柄を同じように持った場合との差で、相場全体の上げ下げを取り除いた本当の銘柄選びの効果です。行を押すと詳細が開きます。</p>
+    </div>
+    <div class="filters" data-filter="market"></div>
+    <div class="scroller"><table class="mt" id="mk-rules"></table></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-mk-find" id="mk-find-sec">
+    <div class="sec-head">
+      <h2 id="h-mk-find">銘柄を探す</h2>
+      <p>銘柄名・証券コード・業種で探せます。並べ替えの基準にするルールを選ぶと、そのルールの成績が良い順に並びます。行を押すと、その銘柄の全ルールの結果を開きます。</p>
+    </div>
+    <div class="finder">
+      <div class="field grow"><label for="mk-q">銘柄名・コード・業種</label><input type="search" id="mk-q" placeholder="例：トヨタ、7203、銀行業"></div>
+      <div class="field"><label for="mk-mkt">市場</label><select id="mk-mkt"><option value="">すべて</option><option>プライム</option><option>スタンダード</option><option>グロース</option></select></div>
+      <div class="field"><label for="mk-sec">業種</label><select id="mk-sec"></select></div>
+      <div class="field"><label for="mk-rule">基準にするルール</label><select id="mk-rule"></select></div>
+      <div class="field"><label for="mk-v">そのルールの判定</label><select id="mk-v"><option value="">すべて</option><option value="P">◎ 全関門通過</option><option value="PN">◎ または ○</option><option value="G">多重検定で消滅</option><option value="M">▼ 有意にマイナス</option></select></div>
+      <div class="field"><label for="mk-sort">並び順</label><select id="mk-sort"><option value="d">平均の高い順</option><option value="a">平均の低い順</option><option value="c">証券コード順</option><option value="p">◎○の多い順</option></select></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline"><span class="note" id="mk-count"></span><span class="note">補正は、この範囲の全銘柄×全ルールをまとめて試したものとして計算</span></div>
+    <div class="scroller"><table class="st" id="mk-stocks"></table></div>
+    <div><button type="button" class="btn ghost" id="mk-more" hidden>さらに50銘柄</button></div>
+    <div id="mk-stock" hidden>
+      <div class="detail">
+        <div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline"><h3 id="mk-stock-h"></h3><span class="note">点が平均、線が95%範囲</span></div><div id="mk-forest"></div></div>
+        <div class="panel" id="mk-sel"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
 <!-- ===================== 結果 ===================== -->
 <main class="view" id="v-results">
   <header class="hero">
@@ -390,15 +474,16 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       <div class="eyebrow">目次</div>
       <a href="#manual-about">1. わかること・わからないこと</a>
       <a href="#manual-screens">2. 画面の構成</a>
-      <a href="#manual-results">3. 結果画面の読み方</a>
-      <a href="#manual-gates">4. 6つの関門</a>
-      <a href="#manual-verdicts">5. 判定ラベル</a>
-      <a href="#manual-sim">6. シミュレーター</a>
-      <a href="#manual-search">7. 検索と絞り込み</a>
-      <a href="#manual-update">8. データの更新</a>
-      <a href="#manual-addrule">9. ルールを追加する</a>
-      <a href="#manual-glossary">10. 用語集</a>
-      <a href="#manual-limits">11. 限界と注意</a>
+      <a href="#manual-market">3. 市場全体の読み方</a>
+      <a href="#manual-results">4. 6銘柄の詳細の読み方</a>
+      <a href="#manual-gates">5. 6つの関門</a>
+      <a href="#manual-verdicts">6. 判定ラベル</a>
+      <a href="#manual-sim">7. シミュレーター</a>
+      <a href="#manual-search">8. 検索と絞り込み</a>
+      <a href="#manual-update">9. データの更新</a>
+      <a href="#manual-addrule">10. ルールを追加する</a>
+      <a href="#manual-glossary">11. 用語集</a>
+      <a href="#manual-limits">12. 限界と注意</a>
     </nav>
     <div class="doc">
       <section id="m-about">
@@ -412,15 +497,48 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
         <h2>2. 画面の構成</h2>
         <table>
           <tr><th>画面</th><th>できること</th></tr>
-          <tr><td><a href="#results">結果</a></td><td>全ルールの生き残り数、銘柄×ルールの色マップ、銘柄ごとの信頼区間と関門の合否、損益曲線</td></tr>
-          <tr><td><a href="#sim">シミュレーター</a></td><td>初期資金・投入割合・コストなどを決めて、ルールどおりに売買した場合の資産推移を再現</td></tr>
+          <tr><td><a href="#market">市場全体</a></td><td>東証の全銘柄（約3,600）と TOPIX100 で、ルールが市場全体で効くかの検定。銘柄名・コード・業種で銘柄を探し、その銘柄の全ルールの結果を開ける</td></tr>
+          <tr><td><a href="#results">6銘柄の詳細</a></td><td>トヨタ・ソニーなど6銘柄を5分足も含めて詳しく検定した結果。色マップ、信頼区間、関門の合否、損益曲線</td></tr>
+          <tr><td><a href="#sim">シミュレーター</a></td><td>初期資金・投入割合・コストなどを決めて、ルールどおりに売買した場合の資産推移を再現。6銘柄と TOPIX100 の銘柄で使えます</td></tr>
           <tr><td><a href="#rules">ルール辞典</a></td><td>各ルールの条件・入り・出口・狙いの説明と、銘柄ごとの結果の一覧。検索できます</td></tr>
           <tr><td><a href="#manual">説明書</a></td><td>このページ</td></tr>
         </table>
       </section>
 
+      <section id="m-market">
+        <h2>3. 市場全体の読み方</h2>
+        <p>東証の内国株（プライム・スタンダード・グロース）全銘柄と、そのうちの TOPIX100（時価総額と流動性が大きい主要100銘柄）に、同じ28の日足ルールを当てています。銘柄一覧は日本取引所グループ（JPX）が毎月公開しているものを使っています。上の切り替えで範囲を選べます。</p>
+        <h3>2種類の答え</h3>
+        <ul>
+          <li><strong>銘柄別</strong>：全銘柄×全ルール（全銘柄なら約10万通り）を1つの検定群として多重検定の補正をかけます。試した数が多いほど補正は厳しくなるので、6銘柄の詳細で「全関門通過」だったものでも、ここでは消えることがあります。偶然の当たりを拾わないための正しい挙動です。</li>
+          <li><strong>市場全体（ルール別の表）</strong>：ルールごとに「その日シグナルが出た銘柄の平均」を日ごとに1つの値にまとめ、その並びを検定します。同じ日の銘柄は一斉に動くので、銘柄を1つずつ独立に数えると有意に出すぎます。</li>
+        </ul>
+        <h3>ルール別の表の列</h3>
+        <table>
+          <tr><th style="width:34%">列</th><th>意味</th></tr>
+          <tr><td>1回あたり平均（市場全体）</td><td>シグナルが出た銘柄を、コストを引いたあと平均でどれだけ稼いだか（bps）</td></tr>
+          <tr><td>同じ日の他銘柄との差</td><td>同じ日にシグナルが出なかった銘柄を同じように持った場合との差。相場全体の上げ下げを取り除いた「銘柄選びの効果」です。ここがプラスで有意なら、そのルールは他の銘柄より良い銘柄を選べています</td></tr>
+          <tr><td>補正後 p　平均 / 差</td><td>上の2つそれぞれについて、28ルールを試したことを織り込んだ p 値</td></tr>
+          <tr><td>1日遅れで入った場合の差</td><td>シグナルの翌日の引けで入った場合の、同じ日の他銘柄との差と補正後 p 値</td></tr>
+          <tr><td>プラスの銘柄</td><td>銘柄ごとに計算した平均がプラスだった銘柄の割合</td></tr>
+        </table>
+        <h3>判定（市場全体）</h3>
+        <ul>
+          <li><span class="chip good"><span class="glyph">◎</span>市場全体で有効</span>：平均が補正後も有意にプラス、他銘柄との差もプラス、前半と後半で同じ向き、DSR 0.95 超。</li>
+          <li><span class="chip good"><span class="glyph">○</span>他銘柄より優位</span>：同じ日の他銘柄との差が補正後も有意にプラスで、前半・後半とも同じ向き、1日遅らせて入っても有意。差は小さいことが多く、取るには売りと買いの組み合わせが要ります。</li>
+          <li><span class="chip warn"><span class="glyph">△</span>1日遅らせると消える</span>：他銘柄との差は有意だったが、シグナルの翌日の引けで入ると有意でなくなった。下の「1日遅れの検定」を参照。</li>
+          <li><span class="chip warn"><span class="glyph">△</span>一部の関門のみ</span>：平均か差のどちらかは有意だが、ほかの関門で落ちた。</li>
+          <li><span class="chip neg"><span class="glyph">▼</span>有意にマイナス</span>・<span class="chip mute">優位性なし</span>：銘柄別と同じ意味。</li>
+        </ul>
+        <h3>1日遅れの検定</h3>
+        <p>売買の少ない銘柄では、終値が買い気配と売り気配の間を行き来するだけで「下げた翌日に戻った」ように見えます。実際に買うときは売り気配で約定するので、この戻りは取れません。そこで、シグナルが出た日の引けではなく<strong>翌日の引けで入った場合</strong>の差も検定しています。見かけの戻りなら1日遅らせると消え、本物の効果なら残ります。「他銘柄より優位」はこの検定も通ったものだけです。</p>
+        <p>行を押すと、毎日シグナル銘柄に均等に資金を配分した場合の累積（概算）と、点灯日数・前半後半などの詳細が開きます。「このルールの成績順に銘柄を並べる」で下の銘柄検索に移れます。</p>
+        <h3>銘柄を探す</h3>
+        <p>銘柄名・証券コード・業種で検索し、市場・業種・判定で絞り込めます。基準にするルールを選ぶと、その成績の列が出て並べ替えができます。「◎の数」「○の数」はその銘柄で全関門通過・惜しいとなったルールの数です。行を押すと、その銘柄の全ルールの信頼区間と関門の合否を開きます（95%信頼区間は計算時間の都合で全銘柄では省略しています）。</p>
+      </section>
+
       <section id="m-results">
-        <h2>3. 結果画面の読み方</h2>
+        <h2>4. 6銘柄の詳細の読み方</h2>
         <h3>ファネル（一番上の5つの数字）</h3>
         <p>左から「検定したルールの総数 → コスト控除後に平均プラス → 単独で見て有意 → 多重検定の補正後も有意 → 全関門を通過」。右へ行くほど厳しい条件で、数字が減っていく様子そのものが結論です。</p>
         <h3>銘柄 × ルールの色マップ</h3>
@@ -432,7 +550,7 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       </section>
 
       <section id="m-gates">
-        <h2>4. 6つの関門</h2>
+        <h2>5. 6つの関門</h2>
         <p>全部を通ったものだけが「全関門通過」になります。順番は、ゆるい関門から厳しい関門へ並べています。</p>
         <div class="gate-doc"><h4><span class="n">1</span>コスト控除後の平均がプラス</h4>
           <p>売買のたびに往復コスト（個別株0.10%、日経平均0.05%）を差し引いても、1回あたりの平均損益がプラスか。どれほど統計的に確かでも、1回の利益がコストより小さければ実際には負けます。</p></div>
@@ -449,7 +567,7 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       </section>
 
       <section id="m-verdicts">
-        <h2>5. 判定ラベル</h2>
+        <h2>6. 判定ラベル</h2>
         <table>
           <tr><th style="width:40%">ラベル</th><th>意味</th></tr>
           <tr><td><span class="chip good"><span class="glyph">◎</span>全関門通過</span></td><td>6つすべて合格。それでも別の期間・別の銘柄での確認が必要な「候補」です</td></tr>
@@ -462,10 +580,10 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       </section>
 
       <section id="m-sim">
-        <h2>6. シミュレーター</h2>
+        <h2>7. シミュレーター</h2>
         <h3>使い方</h3>
         <ol>
-          <li>銘柄とルールを選びます。ルール辞典や結果画面の「このルールでシミュレーション」からも移れます。</li>
+          <li>銘柄とルールを選びます。選べる銘柄は、詳しく検定した6銘柄と TOPIX100 の銘柄です。ルール辞典、6銘柄の詳細、市場全体の銘柄パネルの「このルールでシミュレーション」からも移れます。</li>
           <li>初期資金、1回に使う割合、往復コスト、複利か単利か、100株単位にするか、期間を決めます。変えるとすぐ計算し直します。</li>
           <li>最初の一文に「最終的にいくらになったか」と「同じ期間ただ持ち続けたらいくらか」が出ます。<strong>まずこの2つを比べてください</strong>。統計的に有意なルールでも、持ち続けた方がはるかに増えることはよくあります。ルールは相場にいる時間が短いからです。</li>
         </ol>
@@ -485,7 +603,7 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       </section>
 
       <section id="m-search">
-        <h2>7. 検索と絞り込み</h2>
+        <h2>8. 検索と絞り込み</h2>
         <p>結果画面とルール辞典の上にある検索欄は、ルール名だけでなく、条件・入り・出口・狙いの説明文も対象にします。両方の画面で同じ検索条件が使われます。</p>
         <ul>
           <li>空白で区切ると、すべての語を含むものに絞り込みます。例：<code>RSI 5日</code>、<code>窓 売り</code>、<code>引け 翌営業日</code></li>
@@ -497,12 +615,20 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       </section>
 
       <section id="m-update">
-        <h2>8. データの更新</h2>
+        <h2>9. データの更新</h2>
         <p>このページは作成時点の結果を表示するだけで、ページ自体が株価を取りに行くことはありません。最新のデータで作り直すには、Mac のターミナルで次を実行します。</p>
         <pre><code>cd ~/Documents/GitHub/edgelab
 .venv/bin/python export.py          # 既定の6銘柄を取得・検定（数分）
 .venv/bin/python build_site.py      # site/dashboard.html を作り直す</code></pre>
-        <p>銘柄を変えるときは、コードを並べて指定します。日本株は末尾に <code>.T</code>、指数は <code>^N225</code>、米国株は <code>AAPL</code> のように書きます。</p>
+        <p>市場全体のデータは次で作ります。全銘柄は取得に約3分、検定に数分かかります。</p>
+        <pre><code>.venv/bin/python scan.py --universe topix100   # 主要100銘柄（シミュレーター用データも作る）
+.venv/bin/python scan.py --universe all        # 東証の内国株 全銘柄
+.venv/bin/python build_site.py</code></pre>
+        <p>範囲は <code>core30</code>・<code>topix100</code>・<code>topix500</code>・<code>prime</code>・<code>all</code> から選べます。ダッシュボードに表示されるのは <code>all</code> と <code>topix100</code> です。</p>
+        <p>市場全体の詳細とシミュレーターは別ファイルを読み込むため、手元の HTML を直接開くと表示されません。次のように開いてください。</p>
+        <pre><code>.venv/bin/python -m http.server 8000 -d site
+# ブラウザで http://localhost:8000/dashboard.html を開く</code></pre>
+        <p>6銘柄の詳細の銘柄を変えるときは、コードを並べて指定します。日本株は末尾に <code>.T</code>、指数は <code>^N225</code>、米国株は <code>AAPL</code> のように書きます。</p>
         <pre><code>.venv/bin/python export.py 7203.T 6758.T 4063.T ^N225</code></pre>
         <p>そのほかのコマンド：</p>
         <table>
@@ -515,7 +641,7 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       </section>
 
       <section id="m-addrule">
-        <h2>9. ルールを追加する</h2>
+        <h2>10. ルールを追加する</h2>
         <p>自分のアイデアを検定するには、<code>edgelab/hypotheses.py</code> の <code>daily_hypotheses</code> に1行足します。たとえば「5日移動平均を上抜けた日の引けで買い、3日持つ」なら：</p>
         <pre><code>ma5 = d["close"].rolling(5).mean()
 cross = (d["close"] &gt; ma5) &amp; (d["close"].shift(1) &lt;= ma5.shift(1))
@@ -526,7 +652,7 @@ add(_mk("順張り:5日線上抜け→3日保有", "モメンタム", d, cross, 
       </section>
 
       <section id="m-glossary">
-        <h2>10. 用語集</h2>
+        <h2>11. 用語集</h2>
         <dl>
           <dt>bps（ベーシスポイント）</dt><dd>0.01% のこと。10bps = 0.10%、100bps = 1%。</dd>
           <dt>往復コスト</dt><dd>買いと売りの1往復でかかる費用。手数料に加え、気配値の差（スプレッド）や思った値段で約定しないずれを含めた見積もり。</dd>
@@ -551,12 +677,13 @@ add(_mk("順張り:5日線上抜け→3日保有", "モメンタム", d, cross, 
       </section>
 
       <section id="m-limits">
-        <h2>11. 限界と注意</h2>
+        <h2>12. 限界と注意</h2>
         <ul>
           <li>同じルールが複数銘柄で効いて見えても、独立した確認にはなりません。RSI(2)&lt;10 は相場全体が急落した日に一斉に点灯するため、同じ日の結果を何度も数えています。</li>
           <li>5分足は直近約2か月しかなく、検出力が足りません。5分足の「優位性なし」は「判断できない」と読んでください。</li>
           <li>自分の売買による値動きへの影響、空売りの制約・貸株料、税金は考慮していません。</li>
-          <li>現在上場している銘柄だけを調べているため、上場廃止になった銘柄の成績は含まれていません（生存者バイアス）。</li>
+          <li>現在上場している銘柄だけを調べているため、上場廃止になった銘柄の成績は含まれていません（生存者バイアス）。全銘柄の結果では特にこの影響が大きく、小型株の「買い」ルールの成績は実際より良く見えている可能性があります。</li>
+          <li>全銘柄には売買の少ない小型株も含みます。往復コストは一律 0.10% で計算していますが、小型株の実際のコストはもっと大きいことがあります。</li>
           <li>データは Yahoo Finance の無料データで、誤りや欠損がありえます。</li>
           <li>過去の統計の検定結果であり、将来の成績や特定の売買を勧めるものではありません。投資の判断はご自身の責任で行ってください。</li>
         </ul>
@@ -570,11 +697,13 @@ add(_mk("順張り:5日線上抜け→3日保有", "モメンタム", d, cross, 
 <div class="tip" id="tip" hidden></div>
 
 <script id="data" type="application/json">__DATA__</script>
+<script id="udata" type="application/json">__UDATA__</script>
 <script>
 (function () {
 'use strict';
 const D = JSON.parse(document.getElementById('data').textContent);
 const S = D.symbols;
+const U = JSON.parse(document.getElementById('udata').textContent || '{}');
 const HEAD = '逆張り:RSI2<10→5日保有';
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -655,6 +784,7 @@ function nameOk(rule) {
 }
 const rowOk = r => F.v === 'all' || vclass(r.verdict) === F.v;
 const ruleOk = rule => nameOk(rule) && (F.v === 'all' || rule.cells.some(c => c && rowOk(c)));
+const nameOkByName = nm => { const rb = ruleBy.get(nm); return rb ? nameOk(rb) : F.q.split(/\s+/).map(norm).filter(Boolean).every(t => norm(nm).indexOf(t) >= 0); };
 function hl(text) {
   const terms = F.q.split(/\s+/).filter(Boolean).map(t => t.normalize('NFKC'));
   let out = esc(text);
@@ -694,11 +824,11 @@ function renderFilters() {
     $('c-' + k).textContent = rules.length + 'ルール中 ' + n + '件';
   });
 }
-function onFilter() { renderFilters(); renderHM(); renderForest(); renderRules(); }
+function onFilter() { renderFilters(); renderHM(); renderForest(); renderRules(); if (state.view === 'market') renderMkRules(); }
 addEventListener('keydown', e => {
   if (e.key !== '/' || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
-  const v = state.view === 'rules' ? 'rules' : 'results';
-  if (state.view !== 'results' && state.view !== 'rules') return;
+  if (['results', 'rules', 'market'].indexOf(state.view) < 0) return;
+  const v = state.view;
   e.preventDefault(); $('q-' + v).focus();
 });
 
@@ -707,13 +837,15 @@ const firstPass = S.findIndex(s => s.rows.some(r => r.verdict === '有望(要追
 const state = { view: 'results', si: Math.max(0, firstPass), name: HEAD };
 // アーティファクトの枠内では # リンクの移動が外側に取られるため、画面切替はスクリプトで行う
 function applyRoute(h) {
-  h = h || 'results';
+  h = h || '';
   const head = h.split('-')[0];
-  const view = ['results', 'sim', 'rules', 'manual'].indexOf(head) >= 0 ? head : 'results';
+  const VIEWS = ['market', 'results', 'sim', 'rules', 'manual'];
+  const view = VIEWS.indexOf(head) >= 0 ? head : (U.all || U.topix100 ? 'market' : 'results');
   state.view = view;
-  ['results', 'sim', 'rules', 'manual'].forEach(v => { $('v-' + v).hidden = v !== view; });
+  VIEWS.forEach(v => { $('v-' + v).hidden = v !== view; });
   document.querySelectorAll('nav.views a').forEach(a => { if (a.dataset.v === view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   if (view === 'sim') runSim();
+  if (view === 'market') renderMarket();
   if (view === 'results') { const s = S[state.si]; renderEq(s, findRow(s, state.name)); }
   const sub = h.indexOf('-') > 0 ? $('m-' + h.split('-').slice(1).join('-')) : null;
   if (sub) sub.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -726,6 +858,7 @@ function go(h) {
 document.addEventListener('click', e => {
   const a = e.target.closest('a[href^="#"]'); if (!a) return;
   e.preventDefault();
+  if (a.dataset.simkey) setSim(a.dataset.simkey, a.dataset.simrule);
   go(a.getAttribute('href').slice(1));
 });
 addEventListener('hashchange', () => applyRoute(location.hash.slice(1)));
@@ -829,10 +962,9 @@ $('tabs').addEventListener('keydown', e => {
 });
 
 /* ---------- forest ---------- */
-function renderForest() {
-  const s = S[state.si];
+function forestHtml(s, rows, selName, filtered) {
   const vals = [];
-  s.rows.forEach(r => { vals.push(isNum(r.lo) ? r.lo : r.mean, isNum(r.hi) ? r.hi : r.mean); });
+  rows.forEach(r => { vals.push(isNum(r.lo) ? r.lo : r.mean, isNum(r.hi) ? r.hi : r.mean); });
   let lo = Math.min.apply(null, [0].concat(vals.filter(isNum))), hi = Math.max.apply(null, [0].concat(vals.filter(isNum)));
   const st = niceStep(hi - lo); lo = Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st;
   const X = v => ((v - lo) / (hi - lo) * 100).toFixed(2) + '%';
@@ -841,17 +973,18 @@ function renderForest() {
   const row = r => {
     const c = r.mean >= 0 ? 'var(--pos)' : 'var(--neg)';
     const ci = isNum(r.lo) ? '<span class="ci" style="left:' + X(r.lo) + ';width:calc(' + X(r.hi) + ' - ' + X(r.lo) + ');background:' + c + '"></span>' : '';
-    return '<button type="button" class="fr' + (r.name === state.name ? ' sel' : '') + '" data-name="' + esc(r.name) + '"><span class="nm">' + hl(r.name) + '</span>' +
+    return '<button type="button" class="fr' + (r.name === selName ? ' sel' : '') + '" data-name="' + esc(r.name) + '"><span class="nm">' + hl(r.name) + '</span>' +
       '<span class="strip">' + grid + ci + '<span class="pt" style="left:' + X(r.mean) + ';background:' + c + '"></span></span><span class="val">' + sg(r.mean) + '</span></button>';
   };
-  const ok = r => nameOk(ruleBy.get(r.name)) && rowOk(r);
-  const d = s.rows.filter(r => !isIntra(r) && ok(r)).sort((a, b) => b.mean - a.mean);
-  const i = s.rows.filter(r => isIntra(r) && ok(r)).sort((a, b) => b.mean - a.mean);
+  const ok = r => !filtered || (nameOkByName(r.name) && rowOk(r));
+  const d = rows.filter(r => !isIntra(r) && ok(r)).sort((a, b) => b.mean - a.mean);
+  const i = rows.filter(r => isIntra(r) && ok(r)).sort((a, b) => b.mean - a.mean);
   const body = (d.length ? '<div class="fgrp">日足ルール</div>' + d.map(row).join('') : '') +
     (i.length ? '<div class="fgrp">5分足ルール · 標本 ' + s.sessions5m + ' 日</div>' + i.map(row).join('') : '');
-  $('forest').innerHTML = '<div class="f-axis"><span></span><div class="ticks">' + ticks.map(t => '<span style="left:' + X(t) + '">' + t + '</span>').join('') + '</div><span style="text-align:right">bps</span></div>' +
+  return '<div class="f-axis"><span></span><div class="ticks">' + ticks.map(t => '<span style="left:' + X(t) + '">' + t + '</span>').join('') + '</div><span style="text-align:right">bps</span></div>' +
     (body || '<div class="empty">この銘柄には検索条件に合うルールがありません。</div>');
 }
+function renderForest() { const s = S[state.si]; $('forest').innerHTML = forestHtml(s, s.rows, state.name, true); }
 $('forest').addEventListener('click', e => { const b = e.target.closest('.fr'); if (!b) return; state.name = b.dataset.name; renderDetail(); });
 $('forest').addEventListener('pointermove', e => {
   const b = e.target.closest('.fr'); if (!b) { hideTip(); return; }
@@ -860,29 +993,32 @@ $('forest').addEventListener('pointermove', e => {
 $('forest').addEventListener('pointerleave', hideTip);
 
 /* ---------- selected rule ---------- */
-function renderSel() {
-  const s = S[state.si], r = findRow(s, state.name);
+function selHtml(s, r, o) {
+  o = o || {};
   const gate = (ok, label, val, desc) => '<div class="gate ' + (ok === null ? 'na' : ok ? 'ok' : 'ng') + '"><span class="ic">' + (ok === null ? '–' : ok ? '✓' : '✗') + '</span><span>' + label + '<span class="gd">' + desc + '</span></span><span class="gv">' + val + '</span></div>';
   const same = isNum(r.is) && isNum(r.oos) ? (Math.sign(r.is) === Math.sign(r.oos) && r.mean > 0) : null;
-  $('sel').innerHTML =
-    '<div style="display:grid;gap:6px"><div class="eyebrow">' + esc(s.label) + ' · ' + esc(s.symbol) + '</div>' +
+  const doc = r.doc || { cond: '—', entry: '—', exit: '—' };
+  return '<div style="display:grid;gap:6px"><div class="eyebrow">' + esc(s.label) + ' · ' + esc(s.symbol) + '</div>' +
     '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between"><h3 style="font-size:17px">' + esc(r.name) + '</h3>' + chip(r.verdict) + '</div>' +
-    '<p class="note" style="color:var(--ink-2)">' + esc(r.doc.cond) + ' → ' + esc(r.doc.entry) + '、' + esc(r.doc.exit) + '</p></div>' +
+    '<p class="note" style="color:var(--ink-2)">' + esc(doc.cond) + ' → ' + esc(doc.entry) + '、' + esc(doc.exit) + '</p></div>' +
     '<div class="gates">' +
     gate(r.mean > 0, 'コスト控除後の平均がプラス', sg(r.mean) + ' bps', '手数料とスプレッドを毎回差し引いた後の1回あたり損益') +
     gate(isNum(r.p) ? (r.p < 0.05 && r.mean > 0) : null, '単独で見て有意', 'p ' + pf(r.p), '保有期間の重なりを補正した t 検定') +
-    gate(isNum(r.fdr) ? (r.fdr < 0.05 && r.mean > 0) : null, '多重検定の補正後も有意', 'p ' + pf(r.fdr), '試したルールの数を織り込んだ p 値') +
+    gate(isNum(r.fdr) ? (r.fdr < 0.05 && r.mean > 0) : null, '多重検定の補正後も有意', 'p ' + pf(r.fdr), o.fdrDesc || '試したルールの数を織り込んだ p 値') +
     gate(isNum(r.ctrl) ? (r.ctrl < 0.05 && r.mean > 0) : null, 'シグナルが出ない日より良い', isNum(r.ctrl) ? 'p ' + pf(r.ctrl) : '対照なし', '上昇相場で持っていただけ、を除外する比較') +
-    gate(same, '後半の検証期間でも同じ向き', sg(r.is, 0) + ' → ' + sg(r.oos, 0), '前半70%の傾向が ' + s.split + ' 以降も続いたか') +
+    gate(same, '後半の検証期間でも同じ向き', sg(r.is, 0) + ' → ' + sg(r.oos, 0), s.split ? '前半70%の傾向が ' + s.split + ' 以降も続いたか' : '前半70%の傾向が後半30%でも続いたか') +
     gate(isNum(r.dsr) ? (r.dsr > 0.95 && r.mean > 0) : null, '試行回数で割り引いても残る', 'DSR ' + f(r.dsr, 2), 'Deflated Sharpe Ratio。0.95 超で合格') +
     '</div><div class="stats">' +
-    [['取引回数', r.n.toLocaleString()], ['勝率', f(r.win) + '%'], ['年率シャープ', f(r.sharpe, 2)], ['95%信頼区間', sg(r.lo, 0) + '〜' + sg(r.hi, 0)], ['損益分岐コスト', f(r.gross) + 'bps'], ['最大下落', f(r.dd) + '%']]
+    [['取引回数', isNum(r.n) ? r.n.toLocaleString() : '—'], ['勝率', f(r.win) + '%'], ['年率シャープ', f(r.sharpe, 2)], ['95%信頼区間', isNum(r.lo) ? sg(r.lo, 0) + '〜' + sg(r.hi, 0) : '省略'], ['損益分岐コスト', f(r.gross) + 'bps'], ['最大下落', f(r.dd) + '%']]
       .map(x => '<div class="stat"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div></div>').join('') +
-    '</div><div class="chart" id="eq"></div>' +
+    '</div>' + (o.chart ? '<div class="chart" id="eq"></div>' : '') +
     (isIntra(r) ? '<p class="note">5分足は標本 ' + s.sessions5m + ' 日。5bps の優位性を見つけられる確率（検出力）は ' + f((r.power || 0) * 100, 0) + '% です。</p>' : '') +
-    (isIntra(r) ? '' : '<div><a class="btn" href="#sim" id="go-sim">このルールでシミュレーション →</a></div>');
-  const g = $('go-sim');
-  if (g) g.addEventListener('click', () => setSim(state.si, r.name));
+    (isIntra(r) ? '' : o.simKey ? '<div><a class="btn" href="#sim" data-simkey="' + esc(o.simKey) + '" data-simrule="' + esc(r.name) + '">このルールでシミュレーション →</a></div>'
+      : (o.noSimNote ? '<p class="note">' + o.noSimNote + '</p>' : ''));
+}
+function renderSel() {
+  const s = S[state.si], r = findRow(s, state.name);
+  $('sel').innerHTML = selHtml(s, r, { chart: true, simKey: 'd:' + state.si });
   renderEq(s, r);
 }
 function renderDetail() { renderHM(); renderTabs(); renderForest(); renderSel(); }
@@ -1034,15 +1170,77 @@ function monteCarlo(nets, frac, cap, runs) {
 }
 
 /* ---------- simulator UI ---------- */
-const SIM = { si: Math.max(0, S.findIndex(s => s.symbol === '6758.T')), name: HEAD, shown: 50 };
+const DCOLS = ['n', 'mean', 'lo', 'hi', 'win', 't', 'p', 'fdr', 'dsr', 'ctrl', 'sharpe', 'is', 'oos', 'dd', 'gross', 'power', 'perYear'];
+function verdictOf(r) {
+  if (!isNum(r.p)) return '判定不能';
+  const pos = r.mean > 0;
+  if (r.fdr < 0.05 && !pos) return '有意にマイナス';
+  if (r.fdr < 0.05 && pos) {
+    if (!(isNum(r.is) && isNum(r.oos))) return 'FDR通過・OOS不足';
+    if (Math.sign(r.is) !== Math.sign(r.oos)) return 'IS/OOS不一致';
+    if (!(r.dsr > 0.95)) return 'FDR通過・DSR不足';
+    return '有望(要追試)';
+  }
+  if (r.p < 0.05) return '補正で消滅';
+  return '優位性なし';
+}
+function decodeRows(uni, arr) {
+  return U[uni].rules.map((R, i) => {
+    const o = { name: R.name, family: R.family, doc: R.doc };
+    DCOLS.forEach((k, j) => { o[k] = arr[i] ? arr[i][j] : null; });
+    o.verdict = verdictOf(o);
+    return o;
+  });
+}
+const DETAIL = {};
+function loadJSON(path) {
+  return fetch(path).then(r => { if (!r.ok) throw new Error(r.status + ' ' + path); return r.json(); });
+}
+function loadDetail(uni, k) {
+  const key = uni + '/' + k;
+  if (!DETAIL[key]) DETAIL[key] = loadJSON('u/' + uni + '/detail_' + k + '.json').catch(err => { delete DETAIL[key]; throw err; });
+  return DETAIL[key];
+}
+const SIMSET = new Set(U.topix100 ? U.topix100.stocks.filter(x => x.sim).map(x => x.c) : []);
+const SRC = {};
+function getSrc(key) {
+  if (SRC[key]) return Promise.resolve(SRC[key]);
+  if (key.indexOf('d:') === 0) { SRC[key] = S[+key.slice(2)]; return Promise.resolve(SRC[key]); }
+  const code = key.slice(2), uni = 'topix100', st = U[uni].stocks.find(x => x.c === code);
+  return Promise.all([loadJSON('u/' + uni + '/sim/' + code + '_T.json'), loadDetail(uni, st.k)]).then(res => {
+    const so = res[0], rows = decodeRows(uni, res[1][code]), cal = U[uni].calendar;
+    let ci = -1; const dates = so.di.map(dd => cal[ci += dd]);
+    const n = dates.length, o = so.o, c = so.c, trades = {};
+    Object.keys(so.rules).forEach(nm => {
+      const R = so.rules[nm]; let e;
+      if (R.e === 'all') { e = []; for (let i = 0; i < n; i++) e.push(i); } else { let k = -1; e = R.e.map(dd => (k += dd)); }
+      const E = [], Rr = [];
+      e.forEach(i => {
+        let v = NaN;
+        if (R.b === 'c2c') { if (i + R.h < n) v = c[i + R.h] / c[i] - 1; }
+        else if (R.b === 'o2c') v = c[i] / o[i] - 1;
+        else if (i + 1 < n) v = o[i + 1] / c[i] - 1;
+        if (isFinite(v)) { E.push(i); Rr.push(R.s * v); }
+      });
+      trades[nm] = { basis: R.b, h: R.h, e: E, r: Rr };
+    });
+    SRC[key] = { symbol: code + '.T', label: st.n, cost: U[uni].cost, dates: dates, px: so.px, tr: c, trades: trades, rows: rows,
+      split: dates[Math.floor(n * 0.7)], start: dates[0], end: dates[n - 1], sessions5m: 0, uni: uni };
+    return SRC[key];
+  });
+}
+const SIM = { key: 'd:' + Math.max(0, S.findIndex(s => s.symbol === '6758.T')), name: HEAD, shown: 50, s: null };
 function simRules(s) { return s.rows.filter(r => s.trades[r.name]); }
 function fillSimSym() {
-  $('sim-sym').innerHTML = S.map((s, i) => '<option value="' + i + '">' + esc(s.label + '（' + s.symbol + '）') + '</option>').join('');
+  let h = '<optgroup label="詳しく検定した6銘柄">' + S.map((s, i) => '<option value="d:' + i + '">' + esc(s.label + '（' + s.symbol + '）') + '</option>').join('') + '</optgroup>';
+  if (U.topix100) h += '<optgroup label="TOPIX100（主要銘柄）">' + U.topix100.stocks.filter(x => x.sim).map(x => '<option value="u:' + esc(x.c) + '">' + esc(x.c + ' ' + x.n) + '</option>').join('') + '</optgroup>';
+  $('sim-sym').innerHTML = h;
 }
 function fillSimRule() {
-  const s = S[SIM.si], rs = simRules(s);
+  const s = SIM.s, rs = simRules(s);
+  const sc = nm => { const rb = ruleBy.get(nm); return rb ? ruleScore(rb) : 0; };
   const opt = r => { const g = glyphOf(r.verdict); return '<option value="' + esc(r.name) + '">' + (g ? g[0] + ' ' : '') + esc(r.name) + '（' + sg(r.mean) + 'bps）</option>'; };
-  const d = rs.filter(r => !isIntra(r)).sort((a, b) => ruleScore(ruleBy.get(b.name)) - ruleScore(ruleBy.get(a.name)));
+  const d = rs.filter(r => !isIntra(r)).sort((a, b) => sc(b.name) - sc(a.name));
   const i = rs.filter(isIntra);
   $('sim-rule').innerHTML = '<optgroup label="日足ルール">' + d.map(opt).join('') + '</optgroup>' + (i.length ? '<optgroup label="5分足ルール（約2か月分）">' + i.map(opt).join('') + '</optgroup>' : '');
   if (!rs.some(r => r.name === SIM.name)) SIM.name = (d[0] || rs[0]).name;
@@ -1055,15 +1253,26 @@ function fillSimRule() {
   $('sim-y0').value = String(keep0 >= y0 && keep0 <= y1 ? keep0 : y0);
   $('sim-y1').value = String(keep1 >= y0 && keep1 <= y1 ? keep1 : y1);
 }
-function setSim(si, name) {
-  const changed = SIM.si !== si;
-  SIM.si = si; SIM.name = name || SIM.name;
-  $('sim-sym').value = String(si);
-  if (changed) { $('sim-cost').value = S[si].cost; $('sim-lot').checked = S[si].symbol.charAt(0) !== '^'; }
-  fillSimRule();
+let simLoadSeq = 0;
+function setSim(key, name) {
+  const changed = SIM.key !== key || !SIM.s;
+  SIM.key = key; if (name) SIM.name = name;
+  $('sim-sym').value = key;
+  const seq = ++simLoadSeq;
+  if (changed) $('sim-head').textContent = '読み込み中…';
+  return getSrc(key).then(s => {
+    if (seq !== simLoadSeq) return;
+    SIM.s = s;
+    if (changed) { $('sim-cost').value = s.cost; $('sim-lot').checked = s.symbol.charAt(0) !== '^'; }
+    fillSimRule();
+    runSim();
+  }).catch(err => {
+    if (seq !== simLoadSeq) return;
+    $('sim-head').innerHTML = '<span class="dn">データを読み込めませんでした（' + esc(err.message) + '）。</span>ローカルの HTML ファイルを直接開いている場合は、説明書の「データの更新」にある方法で開いてください。';
+  });
 }
 function simOpts() {
-  const s = S[SIM.si];
+  const s = SIM.s;
   const y0 = +$('sim-y0').value, y1 = Math.max(y0, +$('sim-y1').value);
   let start = s.dates.findIndex(d => +d.slice(0, 4) >= y0); if (start < 0) start = 0;
   let end = s.dates.length - 1; while (end > 0 && +s.dates[end].slice(0, 4) > y1) end--;
@@ -1078,8 +1287,8 @@ let simTimer;
 function queueSim() { clearTimeout(simTimer); simTimer = setTimeout(runSim, 60); }
 let lastSim = null;
 function runSim() {
-  if ($('v-sim').hidden) return;
-  const s = S[SIM.si], r = findRow(s, SIM.name), t = s.trades[SIM.name], o = simOpts();
+  if ($('v-sim').hidden || !SIM.s) return;
+  const s = SIM.s, r = findRow(s, SIM.name), t = s.trades[SIM.name], o = simOpts();
   $('sim-rule-doc').textContent = r.doc.cond + ' → ' + r.doc.entry + '、' + r.doc.exit;
   const res = simulate(s, t, o);
   lastSim = { s: s, r: r, o: o, res: res };
@@ -1215,7 +1424,7 @@ function renderTrades() {
 }
 $('sim-more').addEventListener('click', () => { SIM.shown += 50; renderTrades(); });
 $('simf').addEventListener('submit', e => e.preventDefault());
-$('sim-sym').addEventListener('change', e => { setSim(+e.target.value, SIM.name); queueSim(); });
+$('sim-sym').addEventListener('change', e => { setSim(e.target.value, SIM.name); });
 $('sim-rule').addEventListener('change', e => { SIM.name = e.target.value; queueSim(); });
 $('sim-frac-r').addEventListener('input', e => { $('sim-frac').value = e.target.value; queueSim(); });
 $('sim-frac').addEventListener('input', e => { $('sim-frac-r').value = e.target.value; queueSim(); });
@@ -1242,17 +1451,189 @@ function renderRules() {
       '<dl><dt>条件</dt><dd>' + hl(n.doc.cond) + '</dd><dt>入り</dt><dd>' + hl(n.doc.entry) + '</dd><dt>出口</dt><dd>' + hl(n.doc.exit) + '</dd><dt>狙い</dt><dd>' + hl(n.doc.idea) + '</dd></dl>' +
       '<div class="tk-row">' + cells + '</div>' +
       '<div class="acts"><a class="btn ghost" href="#results" data-act="res" data-si="' + best[1] + '" data-name="' + esc(n.name) + '">結果を見る</a>' +
-      '<a class="btn ghost" href="#sim" data-act="sim" data-si="' + (n.cells[SIM.si] ? SIM.si : best[1]) + '" data-name="' + esc(n.name) + '">シミュレーション</a></div></article>';
+      '<a class="btn ghost" href="#sim" data-act="sim" data-si="' + best[1] + '" data-name="' + esc(n.name) + '">シミュレーション</a></div></article>';
   }).join('');
 }
 $('rules').addEventListener('click', e => {
   const b = e.target.closest('[data-si]'); if (!b) return;
   const si = +b.dataset.si, name = b.dataset.name;
-  if (b.dataset.act === 'sim') { setSim(si, name); return; }
+  if (b.dataset.act === 'sim') { setSim('d:' + si, name); return; }
   state.si = si; state.name = name; renderDetail();
   if (!b.dataset.act) go('results');
   setTimeout(() => $('detail-sec').scrollIntoView({ behavior: 'auto', block: 'start' }), 0);
 });
+
+/* ---------- market (全銘柄・TOPIX100) ---------- */
+const MK = { u: U.all ? 'all' : 'topix100', open: HEAD, rule: HEAD, shown: 50, sel: null, selRule: HEAD, built: false };
+const MVERD = ['市場全体で有効', '他銘柄より優位', '1日遅らせると消える', '一部の関門のみ', '優位性なし', '有意にマイナス'];
+function mchip(v) {
+  if (v === '市場全体で有効') return '<span class="chip good"><span class="glyph">◎</span>市場全体で有効</span>';
+  if (v === '他銘柄より優位') return '<span class="chip good"><span class="glyph">○</span>他銘柄より優位</span>';
+  if (v === '1日遅らせると消える') return '<span class="chip warn"><span class="glyph">△</span>1日遅らせると消える</span>';
+  if (v === '一部の関門のみ') return '<span class="chip warn"><span class="glyph">△</span>一部の関門のみ</span>';
+  if (v === '有意にマイナス') return '<span class="chip neg"><span class="glyph">▼</span>有意にマイナス</span>';
+  return '<span class="chip mute">優位性なし</span>';
+}
+function renderMarket() {
+  if (!U.all && !U.topix100) { $('v-market').innerHTML = '<div class="empty">市場全体のデータがありません。<code>scan.py</code> を実行してから作り直してください。</div>'; return; }
+  const u = U[MK.u];
+  $('mk-gen').textContent = '市場全体スキャン · JPX 銘柄一覧 ' + u.asof.slice(0, 4) + '/' + u.asof.slice(4, 6) + '/' + u.asof.slice(6) + ' 時点 · 株価 ' + u.calendar[u.calendar.length - 1] + ' まで';
+  $('mk-lead').textContent = u.label + 'の ' + u.nStocks.toLocaleString() + ' 銘柄に同じ ' + u.rules.length + ' ルールを当てました。銘柄ごとに ' + u.tests.toLocaleString() + ' 通りの検定をまとめて補正し、さらにルールごとに市場全体で効くかを検定しています。往復コストは ' + u.cost + 'bps。';
+  $('mk-u').innerHTML = ['all', 'topix100'].filter(k => U[k]).map(k => '<button type="button" data-u="' + k + '" aria-pressed="' + (MK.u === k) + '">' + (k === 'all' ? '東証 全銘柄' : 'TOPIX100（主要銘柄）') + '<span class="num">' + U[k].nStocks.toLocaleString() + '</span></button>').join('');
+  $('mk-funnel').innerHTML = [['検定した銘柄×ルール', u.tests, ''], ['コスト控除後に平均プラス', u.plus, ''], ['単独なら有意 (p<0.05)', u.raw, ''], ['多重検定の補正後も有意', u.fdr, ''], ['全関門を通過', u.pass, 'final']]
+    .map(x => '<div class="fstep ' + x[2] + '"><div class="v">' + x[1].toLocaleString() + '</div><div class="k">' + esc(x[0]) + '</div><div class="bar"><i style="width:' + Math.max(1.5, x[1] / u.tests * 100) + '%"></i></div></div>').join('');
+  const good = u.rules.filter(r => r.verdict === '市場全体で有効');
+  const cross = u.rules.filter(r => r.verdict === '他銘柄より優位');
+  const gone = u.rules.filter(r => r.verdict === '1日遅らせると消える');
+  const head = u.rules.find(r => r.name === HEAD);
+  const rng2 = (arr, k) => { const v = arr.map(r => r[k]).filter(isNum); return v.length ? f(Math.min.apply(null, v)) + '〜' + f(Math.max.apply(null, v)) : '—'; };
+  const lines = [];
+  lines.push('<p><strong>' + (good.length ? '市場全体で全関門を通ったルール：' + good.map(r => esc(r.name)).join('、') + '。' : '市場全体で全関門を通ったルールはありませんでした。') + '</strong></p>');
+  if (cross.length) lines.push('<p>相場全体の上げ下げを除いても同じ日の他銘柄より良かったのは、' + cross.length + ' ルール（' + cross.map(r => esc(r.name)).join('、') + '）。ただしシグナルの翌日の引けで入ると、差は ' + rng2(cross, 'ex') + 'bps から ' + rng2(cross, 'ex2') + 'bps に縮みます。差の大部分は、売買の少ない銘柄の終値が気配の間を行き来するだけの見かけの戻りで、実際には取れません。残る差も1回あたり数bpsで、小型株の実際の売買コストより小さく、取るには売りと買いを組み合わせる必要があります。</p>');
+  if (gone.length) lines.push('<p>' + gone.map(r => '「' + esc(r.name) + '」').join('、') + 'は他銘柄より有意に良く見えましたが、1日遅らせて入ると差が ' + gone.map(r => sg(r.ex) + '→' + sg(r.ex2) + 'bps').join('、') + ' に消えました。</p>');
+  if (head) lines.push('<p>6銘柄で目立った「RSI(2)<10→5日保有」は、市場全体で1回あたり ' + sg(head.mean) + 'bps（補正後 p=' + pf(head.fdr) + '）、' + f(head.pos, 0) + '% の銘柄でプラスでした。同じ日にシグナルが出ていない銘柄との差は ' + sg(head.ex) + 'bps、1日遅らせると ' + sg(head.ex2) + 'bps。儲けの多くは、売られた個別銘柄の戻りより、相場全体が急落した後の戻りから来ています。</p>');
+  lines.push('<p>銘柄別には ' + u.tests.toLocaleString() + ' 通りを試したため、補正は6銘柄のときよりずっと厳しくなります。データの誤りが疑われる銘柄や売買のほとんどない銘柄は除いています（' + Object.keys(u.excluded || {}).map(k => esc(k) + ' ' + u.excluded[k]).join('、') + '）。</p>');
+  $('mk-finding').innerHTML = '<div class="mark">結論</div><div>' + lines.join('') + '</div>';
+  if (!MK.built) buildFinder();
+  renderFilters();
+  renderMkRules();
+  renderStocks();
+}
+$('mk-u').addEventListener('click', e => {
+  const b = e.target.closest('button[data-u]'); if (!b) return;
+  MK.u = b.dataset.u; MK.shown = 50; MK.sel = null; $('mk-stock').hidden = true; MK.built = false; renderMarket();
+});
+function renderMkRules() {
+  const u = U[MK.u]; if (!u) return;
+  const rank = v => MVERD.indexOf(v);
+  const list = u.rules.filter(r => nameOkByName(r.name)).slice().sort((a, b) => rank(a.verdict) - rank(b.verdict) || ((b.te || -99) - (a.te || -99)));
+  let h = '<thead><tr><th>ルール</th><th>1回あたり平均<br>（市場全体）</th><th>同じ日の<br>他銘柄との差</th><th>補正後 p<br>平均 / 差</th><th>1日遅れで<br>入った場合の差</th><th>プラスの<br>銘柄</th><th>判定</th></tr></thead><tbody>';
+  list.forEach(r => {
+    const open = MK.open === r.name;
+    h += '<tr class="rrow' + (open ? ' open' : '') + '" data-name="' + esc(r.name) + '" tabindex="0" aria-expanded="' + open + '"><td>' + hl(r.name) + '<span class="fm">' + esc(r.family) + ' · ' + r.days.toLocaleString() + '日に点灯</span></td>' +
+      '<td><span class="pill" style="background:' + cellBg(r.mean) + '">' + sg(r.mean) + '</span></td>' +
+      '<td>' + (isNum(r.ex) ? '<span class="pill" style="background:' + cellBg(r.ex) + '">' + sg(r.ex) + '</span>' : '<span class="note">対照なし</span>') + '</td>' +
+      '<td>' + pf(r.fdr) + ' / ' + (isNum(r.fdrE) ? pf(r.fdrE) : '—') + '</td>' +
+      '<td>' + (isNum(r.ex2) ? '<span class="pill" style="background:' + cellBg(r.ex2) + '">' + sg(r.ex2) + '</span><span class="fm">p ' + pf(r.fdrE2) + '</span>' : '<span class="note">—</span>') + '</td>' +
+      '<td><span class="vbar"><i><b style="width:' + (r.pos || 0) + '%"></b></i>' + f(r.pos, 0) + '%</span></td><td>' + mchip(r.verdict) + '</td></tr>';
+    if (open) h += '<tr><td class="exp" colspan="7">' + mkExpand(r, u) + '</td></tr>';
+  });
+  if (!list.length) h += '<tr><td colspan="7"><div class="empty">該当するルールがありません。</div></td></tr>';
+  $('mk-rules').innerHTML = h + '</tbody>';
+  const r = list.find(x => x.name === MK.open);
+  if (r) drawMkCurve(r);
+}
+function mkExpand(r, u) {
+  const kv = (k, v) => '<dt>' + k + '</dt><dd>' + v + '</dd>';
+  return '<div class="expgrid"><div class="chart" id="mk-curve"></div><div style="display:grid;gap:10px;align-content:start">' +
+    '<p style="color:var(--ink-2);font-size:13px">' + esc(r.doc.cond) + ' → ' + esc(r.doc.entry) + '、' + esc(r.doc.exit) + '。' + esc(r.doc.idea) + '。</p>' +
+    '<dl class="kv">' + kv('点灯した日', r.days.toLocaleString() + ' 日') + kv('1日あたりの銘柄数', f(r.avgStocks, 1)) + kv('延べ取引数', r.trades.toLocaleString()) +
+    kv('プラスだった日の割合', f(r.win) + '%') + kv('平均 前半 → 後半', sg(r.isM) + ' → ' + sg(r.oosM) + ' bps') +
+    kv('差 前半 → 後半', isNum(r.isE) ? sg(r.isE) + ' → ' + sg(r.oosE) + ' bps' : '—') +
+    kv('1日遅れで入った場合の差', isNum(r.ex2) ? sg(r.ex2) + ' bps（p ' + pf(r.fdrE2) + '）' : '—') + kv('DSR（市場全体）', f(r.dsr, 2)) +
+    kv('補正後も有意でプラスの銘柄', r.fdrPosN.toLocaleString() + ' / ' + u.nStocks.toLocaleString()) + kv('全関門を通った銘柄', r.passN.toLocaleString()) + '</dl>' +
+    '<div><button type="button" class="btn ghost" data-mkrule="' + esc(r.name) + '">このルールの成績順に銘柄を並べる</button></div></div></div>';
+}
+function drawMkCurve(r) {
+  const box = $('mk-curve'); if (!box) return;
+  lineChart(box, {
+    series: [{ pts: r.curve.map(p => [Date.parse(p[0]), p[1]]), color: 'var(--ink)', area: true }],
+    zero: true, H: 200, fmtY: v => Math.round(v) + '%', label: r.name + ' の市場全体の累積',
+    legend: '<span><i style="background:var(--ink)"></i>毎日シグナルが出た銘柄に均等に配分した場合の累積（概算・単利・コスト後）</span>',
+    tipFmt: p => '<div class="num">' + isoDay(p[0]) + '</div><div class="num">累積 ' + sg(p[1]) + '%</div>',
+  });
+}
+$('mk-rules').addEventListener('click', e => {
+  const b = e.target.closest('[data-mkrule]');
+  if (b) { MK.rule = b.dataset.mkrule; $('mk-rule').value = MK.rule; $('mk-sort').value = 'd'; MK.shown = 50; renderStocks(); $('mk-find-sec').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); return; }
+  const tr = e.target.closest('tr.rrow'); if (!tr) return;
+  MK.open = MK.open === tr.dataset.name ? null : tr.dataset.name; renderMkRules();
+});
+$('mk-rules').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const tr = e.target.closest('tr.rrow'); if (!tr) return;
+  e.preventDefault(); MK.open = MK.open === tr.dataset.name ? null : tr.dataset.name; renderMkRules();
+});
+function buildFinder() {
+  const u = U[MK.u];
+  const secs = Array.from(new Set(u.stocks.map(x => x.s))).sort((a, b) => a.localeCompare(b, 'ja'));
+  $('mk-sec').innerHTML = '<option value="">すべて</option>' + secs.map(x => '<option>' + esc(x) + '</option>').join('');
+  $('mk-rule').innerHTML = u.rules.map(r => '<option value="' + esc(r.name) + '">' + esc(r.name) + '</option>').join('');
+  if (!u.rules.some(r => r.name === MK.rule)) MK.rule = u.rules[0].name;
+  $('mk-rule').value = MK.rule;
+  MK.built = true;
+}
+function stockList() {
+  const u = U[MK.u], ri = u.rules.findIndex(r => r.name === MK.rule);
+  const terms = $('mk-q').value.split(/\s+/).map(norm).filter(Boolean);
+  const mkt = $('mk-mkt').value, sec = $('mk-sec').value, vf = $('mk-v').value, sort = $('mk-sort').value;
+  let list = u.stocks.filter(x => {
+    if (mkt && x.m !== mkt) return false;
+    if (sec && x.s !== sec) return false;
+    if (vf && vf.indexOf(x.v.charAt(ri)) < 0) return false;
+    if (terms.length) { const hay = x.hay || (x.hay = norm(x.c + ' ' + x.n + ' ' + x.s)); if (!terms.every(t => hay.indexOf(t) >= 0)) return false; }
+    return true;
+  });
+  const mv = x => isNum(x.mu[ri]) ? x.mu[ri] : -1e9;
+  const cnt = x => (x.v.match(/P/g) || []).length * 100 + (x.v.match(/N/g) || []).length;
+  if (sort === 'd') list.sort((a, b) => mv(b) - mv(a));
+  else if (sort === 'a') list.sort((a, b) => (isNum(a.mu[ri]) ? a.mu[ri] : 1e9) - (isNum(b.mu[ri]) ? b.mu[ri] : 1e9));
+  else if (sort === 'p') list.sort((a, b) => cnt(b) - cnt(a) || mv(b) - mv(a));
+  else list.sort((a, b) => a.c.localeCompare(b.c));
+  return { list: list, ri: ri };
+}
+function renderStocks() {
+  const u = U[MK.u]; if (!u) return;
+  const L = stockList(), ri = L.ri;
+  $('mk-count').textContent = u.nStocks.toLocaleString() + ' 銘柄中 ' + L.list.length.toLocaleString() + ' 銘柄。「' + MK.rule + '」の成績で表示';
+  const VG = { P: ['◎', 'var(--good-ink)'], N: ['○', 'var(--warn-ink)'], M: ['▼', 'var(--neg)'] };
+  let h = '<thead><tr><th>コード</th><th>銘柄名</th><th>業種</th><th>市場</th><th class="n">平均（bps）</th><th>判定</th><th class="n">◎の数</th><th class="n">○の数</th></tr></thead><tbody>';
+  L.list.slice(0, MK.shown).forEach(x => {
+    const m = x.mu[ri], g = VG[x.v.charAt(ri)];
+    h += '<tr data-c="' + esc(x.c) + '"' + (MK.sel === x.c ? ' class="sel"' : '') + ' tabindex="0"><td class="cd">' + hl(x.c) + '</td><td>' + hl(x.n) + '</td><td>' + esc(x.s) + '</td><td>' + esc(x.m) + '</td>' +
+      '<td class="n"><span class="pill" style="background:' + cellBg(m) + '">' + sg(m, 0) + '</span></td><td>' + (g ? '<span class="glyph" style="color:' + g[1] + '">' + g[0] + '</span>' : '<span class="note">—</span>') + '</td>' +
+      '<td class="n">' + ((x.v.match(/P/g) || []).length || '') + '</td><td class="n">' + ((x.v.match(/N/g) || []).length || '') + '</td></tr>';
+  });
+  if (!L.list.length) h += '<tr><td colspan="8"><div class="empty">条件に合う銘柄がありません。検索語や絞り込みを見直してください。</div></td></tr>';
+  $('mk-stocks').innerHTML = h + '</tbody>';
+  $('mk-more').hidden = MK.shown >= L.list.length;
+}
+['mk-q'].forEach(id => $(id).addEventListener('input', () => { MK.shown = 50; renderStocks(); }));
+['mk-mkt', 'mk-sec', 'mk-v', 'mk-sort'].forEach(id => $(id).addEventListener('change', () => { MK.shown = 50; renderStocks(); }));
+$('mk-rule').addEventListener('change', e => { MK.rule = e.target.value; MK.selRule = MK.rule; MK.shown = 50; renderStocks(); if (MK.sel) openStock(MK.sel); });
+$('mk-more').addEventListener('click', () => { MK.shown += 50; renderStocks(); });
+function onStockPick(e) {
+  const tr = e.target.closest('tr[data-c]'); if (!tr) return;
+  if (e.type === 'keydown' && e.key !== 'Enter') return;
+  MK.sel = tr.dataset.c; MK.selRule = MK.rule; renderStocks(); openStock(MK.sel);
+}
+$('mk-stocks').addEventListener('click', onStockPick);
+$('mk-stocks').addEventListener('keydown', onStockPick);
+function openStock(code) {
+  const u = U[MK.u], uni = MK.u, st = u.stocks.find(x => x.c === code); if (!st) return;
+  $('mk-stock').hidden = false;
+  $('mk-stock-h').textContent = st.c + ' ' + st.n + ' · ' + st.s + ' · ' + st.m;
+  $('mk-forest').innerHTML = '<div class="empty">読み込み中…</div>'; $('mk-sel').innerHTML = '';
+  loadDetail(uni, st.k).then(obj => {
+    if (MK.sel !== code) return;
+    const rows = decodeRows(uni, obj[code]);
+    const sObj = { label: st.n, symbol: st.c + '.T', sessions5m: 0, rows: rows };
+    const draw = () => {
+      $('mk-forest').innerHTML = forestHtml(sObj, rows, MK.selRule, false);
+      const r = rows.find(x => x.name === MK.selRule) || rows[0];
+      $('mk-sel').innerHTML = selHtml(sObj, r, {
+        fdrDesc: u.label + 'の ' + u.tests.toLocaleString() + ' 通りをまとめて補正した p 値',
+        simKey: SIMSET.has(code) ? 'u:' + code : null,
+        noSimNote: 'シミュレーターは TOPIX100 の銘柄と、詳しく検定した6銘柄で使えます。',
+      });
+    };
+    draw();
+    $('mk-forest').onclick = e => { const b = e.target.closest('.fr'); if (!b) return; MK.selRule = b.dataset.name; draw(); };
+    $('mk-stock').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
+  }).catch(err => {
+    $('mk-forest').innerHTML = '<div class="empty">詳細データを読み込めませんでした（' + esc(err.message) + '）。ローカルの HTML を直接開いている場合は、説明書「データの更新」の方法で開いてください。</div>';
+  });
+}
 
 /* ---------- calibration ---------- */
 (function () {
@@ -1269,10 +1650,10 @@ $('foot').innerHTML = '<div>データ: Yahoo Finance（yfinance 経由、配当�
   '<div>更新方法は<a href="#manual-update">説明書の「8. データの更新」</a>を参照。</div>';
 
 /* ---------- boot ---------- */
-fillSimSym(); setSim(SIM.si, HEAD); $('sim-cost').value = S[SIM.si].cost; $('sim-lot').checked = S[SIM.si].symbol.charAt(0) !== '^';
+fillSimSym(); setSim(SIM.key, HEAD);
 renderFilters(); renderDetail(); renderRules();
 applyRoute((location.hash || '').slice(1));
 let rt;
-addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (state.view === 'results') { const s = S[state.si]; renderEq(s, findRow(s, state.name)); } if (state.view === 'sim') renderSimOut(); }, 150); });
+addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (state.view === 'results') { const s = S[state.si]; renderEq(s, findRow(s, state.name)); } if (state.view === 'sim') renderSimOut(); if (state.view === 'market') { const u = U[MK.u]; const r = u && u.rules.find(x => x.name === MK.open); if (r) drawMkCurve(r); } }, 150); });
 })();
 </script>

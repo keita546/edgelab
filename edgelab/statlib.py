@@ -113,6 +113,17 @@ def deflated_sharpe(x: np.ndarray, n_trials: int, var_sr: float) -> tuple[float,
     return float(sr), float(stats.norm.cdf(z))
 
 
+def deflated_sharpe_m(sr: float, T: int, g3: float, g4: float, n_trials: int, var_sr: float) -> float:
+    """deflated_sharpe と同じ値を、シャープ・標本数・歪度・尖度から計算する。"""
+    if not (np.isfinite(sr) and T >= 20):
+        return np.nan
+    sr0 = expected_max_sharpe(n_trials, var_sr)
+    denom = 1.0 - g3 * sr + ((g4 - 1.0) / 4.0) * sr**2
+    if denom <= 0:
+        return np.nan
+    return float(stats.norm.cdf((sr - sr0) * np.sqrt(T - 1) / np.sqrt(denom)))
+
+
 def welch(signal: np.ndarray, control: np.ndarray) -> tuple[float, float]:
     """シグナル日 vs 非シグナル日の Welch t 検定。
 

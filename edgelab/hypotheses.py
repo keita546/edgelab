@@ -16,7 +16,7 @@ class Candidate:
     name: str
     family: str
     rets: pd.Series          # シグナル発生時の方向付きリターン(コスト控除前)
-    control: np.ndarray | None  # 非シグナル時に同じ方向で賭けた場合のリターン(対照群)
+    control: pd.Series | np.ndarray | None  # 非シグナル時に同じ方向で賭けた場合のリターン(対照群)
     horizon: int             # 保有バー数(HAC のラグに使う)
     note: str = ""
     meta: dict = field(default_factory=dict)
@@ -66,7 +66,7 @@ def _mk(name: str, family: str, d: pd.DataFrame, mask: pd.Series, sign: int,
     if mask.sum() < 20:
         return None
     rets = (sign * f[mask]).dropna()
-    ctrl = (sign * f[~mask & f.notna()]).dropna().to_numpy()
+    ctrl = (sign * f[~mask & f.notna()]).dropna()
     return Candidate(name, family, rets, ctrl if len(ctrl) >= 20 else None, h, note,
                      {"basis": basis, "sign": sign})
 

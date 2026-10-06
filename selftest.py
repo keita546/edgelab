@@ -7,6 +7,9 @@
   - 素の p<0.05 の割合 ... 約 5% (これが有意水準の定義)
   - FDR 補正後の生存数 ... ほぼ 0
 ここで FDR 生存が多発するなら、ツール側にバグか先読みがある。
+
+  python selftest.py            # 銘柄別の検定
+  python selftest.py --pooled   # 市場全体の検定(連動する銘柄群)
 """
 from __future__ import annotations
 
@@ -60,5 +63,47 @@ def main() -> int:
     return 0 if ok else 1
 
 
+
+
+def pooled_main(n_stocks: int = 60, n_sims: int = 30) -> int:
+    """市場全体の検定(日ごとにまとめてから検定)の較正テスト。約2分。
+
+    共通の市場要因で連動する乱数の銘柄群を作る。単純リターンの期待値がゼロになるよう
+    対数リターンに -σ²/2 のずれを入れている(入れないと、平均がわずかに本当にプラスになり、
+    それを正しく検出して p<0.05 が増える)。優位性はゼロなので、
+    p<0.05 は約5%、「市場全体で有効」「他銘柄より優位」はほぼ0件になるはず。
+    """
+    from edgelab import scan
+    A, E, eff = [], [], 0
+    for k in range(n_sims):
+        rng = np.random.default_rng(5000 + k)
+        idx = pd.bdate_range("2011-09-12", periods=2000)
+        sm, si, so = 0.011, 0.016, 0.006
+        mkt = rng.normal(0, sm, len(idx))
+        frames = []
+        for i in range(n_stocks):
+            b = rng.uniform(0.6, 1.4)
+            r = b * mkt + rng.normal(0, si, len(idx)) - ((b * sm) ** 2 + si ** 2) / 2
+            close = 1000 * np.exp(np.cumsum(r))
+            open_ = np.r_[close[0], close[:-1]] * np.exp(rng.normal(0, so, len(idx)) - so ** 2 / 2)
+            frames.append((f"S{i}", pd.DataFrame({"open": open_, "high": np.maximum(open_, close) * 1.004,
+                                                    "low": np.minimum(open_, close) * 0.996, "close": close,
+                                                    "volume": rng.lognormal(12, .5, len(idx))}, index=idx)))
+        cal = [x.strftime("%Y-%m-%d") for x in idx]
+        cs = H.daily_hypotheses(H.daily_features(frames[0][1]))
+        meta = {c.name: (c.family, c.horizon, c.meta.get("basis"), c.meta.get("sign")) for c in cs}
+        _, agg = scan.scan_frames(frames, cal, 0.0, 0.7, 0, list(meta))
+        pdf = scan.pool_rules(agg, meta, cal, 0.7)
+        A += list(pdf["p"].dropna()); E += list(pdf["pe"].dropna())
+        eff += int(pdf["verdict"].isin(["市場全体で有効", "他銘柄より優位"]).sum())
+        print(f"  sim {k:02d} 完了", flush=True)
+    A, E = np.array(A), np.array(E)
+    print(f"\n平均の検定 p<0.05: {(A < .05).mean():.1%}　差の検定 p<0.05: {(E < .05).mean():.1%}（理論値 5%）"
+          f"　有効判定 {eff} 件 / {n_sims * len(meta)} ルール（理想は 0）")
+    ok = (A < .05).mean() <= 0.08 and (E < .05).mean() <= 0.08 and eff <= 2
+    print("結果: 較正OK" if ok else "結果: 較正NG")
+    return 0 if ok else 1
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pooled_main() if "--pooled" in sys.argv else main())

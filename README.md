@@ -12,8 +12,11 @@
 
 ```bash
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python export.py            # 既定6銘柄を取得・検定 → out/dashboard.json
-.venv/bin/python build_site.py        # → site/dashboard.html（ブラウザで開く）
+.venv/bin/python export.py                     # 6銘柄を5分足も含めて詳しく検定 → out/dashboard.json
+.venv/bin/python scan.py --universe topix100   # 主要100銘柄（シミュレーター用データも）
+.venv/bin/python scan.py --universe all        # 東証の内国株 全銘柄（約3,600、数分）
+.venv/bin/python build_site.py                 # → site/dashboard.html と site/u/
+.venv/bin/python -m http.server 8000 -d site   # http://localhost:8000/dashboard.html で見る
 ```
 
 ## 個別のコマンド
@@ -22,7 +25,8 @@ python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python run.py --symbol 7203.T --intraday 5m --cost 10
 .venv/bin/python run.py --symbol ^N225 --years 25 --cost 5 --intraday none
 .venv/bin/python sim.py 6758.T "RSI2<10→5日" --capital 3000000 --frac 50
-.venv/bin/python selftest.py          # ツール自体の較正テスト
+.venv/bin/python selftest.py          # ツール自体の較正テスト（銘柄別）
+.venv/bin/python selftest.py --pooled # 市場全体の検定の較正テスト
 ```
 
 | 引数 | 意味 |
