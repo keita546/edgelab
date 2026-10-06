@@ -21,6 +21,49 @@ from .data import CACHE_DIR, back_adjust, sanitize
 from .hypotheses import daily_features, daily_hypotheses
 
 BPS = 1e-4
+FAN_H = [1, 5, 10, 20, 40, 60]          # 予想画面の保有日数(営業日)
+FAN_Q = [10, 25, 50, 75, 90]            # 分位点(%)
+
+
+def fan_for(close: np.ndarray, sig: np.ndarray) -> list:
+    """シグナルが出た日の引けから h 日後までの騰落の分布。
+
+    各 h について [下位10%, 25%, 中央, 75%, 上位10%(いずれも0.1%単位の整数), 上がった割合%, 回数] を並べる。
+    """
+    idx = np.where(sig)[0]
+    out = []
+    for h in FAN_H:
+        j = idx[idx + h < len(close)]
+        if len(j) < 5:
+            out += [None] * 7
+            continue
+        r = close[j + h] / close[j] - 1.0
+        q = np.percentile(r, FAN_Q)
+        out += [int(round(x * 1000)) for x in q] + [int(round(float((r > 0).mean()) * 100)), int(len(j))]
+    return out
+
+
+def _fmt_price(v: float):
+    return int(round(v)) if v >= 100 else round(float(v), 1)
+
+
+def stock_fan(d: pd.DataFrame, cands) -> dict:
+    """1銘柄の予想用データ: 最新値、直近60日の終値、今日のサイン、ルール別の値動きの幅。"""
+    close = d["close"].to_numpy(float)
+    fans, today, ago = [], [], []
+    for c in cands:
+        m = c.meta.get("mask")
+        if m is None or c.family in ("時間帯", "分足"):
+            fans.append(None); today.append("0"); ago.append(None)
+            continue
+        sig = m.reindex(d.index).fillna(False).to_numpy(bool)
+        fans.append(fan_for(close, sig))
+        today.append("1" if sig[-1] else "0")
+        w = np.where(sig)[0]
+        ago.append(int(len(sig) - 1 - w[-1]) if len(w) else None)
+    fans.append(fan_for(close, np.ones(len(close), bool)))     # 最後は「いつ買っても(条件なし)」
+    return {"p": _fmt_price(close[-1]), "d": d.index[-1].strftime("%Y-%m-%d"),
+            "h": [_fmt_price(v) for v in close[-60:]], "t": "".join(today), "ago": ago, "f": fans}
 
 
 def load_cached(symbol: str, with_reason: bool = False):
@@ -37,20 +80,22 @@ def _scan_chunk(args):
     """ワーカー: 銘柄のかたまりを検定し、行と日次集計を返す。"""
     symbols, cal, cost, split, boot, rule_names = args
     frames = ((s, load_cached(s)) for s in symbols)
-    return scan_frames(frames, cal, cost, split, boot, rule_names)
+    return scan_frames(frames, cal, cost, split, boot, rule_names, want_fan=True)
 
 
-def scan_frames(frames, cal, cost, split, boot, rule_names):
+def scan_frames(frames, cal, cost, split, boot, rule_names, want_fan=False):
     """(銘柄, 日足) の並びを検定する。較正テストでは乱数データをここに直接渡す。"""
     pos = pd.Index(pd.to_datetime(cal))
     N = len(cal)
     # 0-3: シグナル和, 件数, 対照和, 件数 / 4-7: 同じものを「1日遅れで入った場合」で
     agg = {nm: np.zeros((8, N)) for nm in rule_names}
-    rows = []
+    rows, fans = [], {}
     for sym, d in frames:
         if d is None or len(d) < 400:
             continue
         cands = daily_hypotheses(daily_features(d))
+        if want_fan:
+            fans[sym] = stock_fan(d, cands)
         cut = d.index[int(len(d) * split)]
         for c in cands:
             st = engine.candidate_stats(c, cost, cut, boot)
@@ -80,7 +125,7 @@ def scan_frames(frames, cal, cost, split, boot, rule_names):
                     ok3 = gx >= 0
                     np.add.at(agg[c.name][row_s], gx[ok3], rr[ok3])
                     np.add.at(agg[c.name][row_n], gx[ok3], 1)
-    return rows, agg
+    return rows, agg, fans
 
 
 def run(symbols: list[str], calendar: list[str], cost: float = 10.0, split: float = 0.7,
@@ -92,17 +137,18 @@ def run(symbols: list[str], calendar: list[str], cost: float = 10.0, split: floa
     names = list(meta)
 
     tasks = [(symbols[i:i + chunk], calendar, cost, split, boot, names) for i in range(0, len(symbols), chunk)]
-    rows, total = [], {nm: np.zeros((8, len(calendar))) for nm in names}
+    rows, total, fans = [], {nm: np.zeros((8, len(calendar))) for nm in names}, {}
     with ProcessPoolExecutor(max_workers=workers) as ex:
-        for k, (r, agg) in enumerate(ex.map(_scan_chunk, tasks), 1):
+        for k, (r, agg, fn) in enumerate(ex.map(_scan_chunk, tasks), 1):
             rows.extend(r)
+            fans.update(fn)
             for nm in names:
                 total[nm] += agg[nm]
             log(f"  検定 {min(k * chunk, len(symbols))}/{len(symbols)} 銘柄")
 
     df = engine.finalize(pd.DataFrame(rows))
     pooled = pool_rules(total, meta, calendar, split)
-    return df, pooled, meta
+    return df, pooled, meta, fans
 
 
 def pool_rules(total: dict, meta: dict, calendar: list[str], split: float) -> pd.DataFrame:

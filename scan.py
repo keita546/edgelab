@@ -109,7 +109,7 @@ def main() -> int:
     print(f"  検定する銘柄 {len(syms)} / {len(u)}　営業日 {len(calendar)}（{calendar[0]}〜{calendar[-1]}）")
     print(f"  除外: {excluded}　不連続以降のみ使用: {trimmed} 銘柄")
 
-    df, pooled, meta = scan.run(syms, calendar, cost=a.cost, boot=a.boot, workers=a.workers)
+    df, pooled, meta, fans = scan.run(syms, calendar, cost=a.cost, boot=a.boot, workers=a.workers)
     names = list(meta)
     print(f"  検定 {len(df):,} 通り　補正後 p<0.05 かつプラス: {int(((df['FDR補正p'] < .05) & (df['平均(bps)'] > 0)).sum())}　"
           f"全関門: {int((df['判定'] == '有望(要追試)').sum())}　({time.time() - t0:.0f}秒)")
@@ -126,7 +126,7 @@ def main() -> int:
     want_sim = a.sim == "yes" or (a.sim == "auto" and len(syms) <= 150)
     cal_pos = {x: i for i, x in enumerate(calendar)}
 
-    stocks, chunks = [], {}
+    stocks, chunks, fchunks = [], {}, {}
     for s in syms:
         if s not in by_sym:
             continue
@@ -135,11 +135,16 @@ def main() -> int:
         k = code[0]                                   # 詳細ファイルは証券コードの先頭1文字で分割
         chunks.setdefault(k, {})[code] = [[num(v) for v in row] for row in g[DETAIL_COLS].to_numpy()]
         mean = [int(round(v)) if math.isfinite(v) else None for v in g["平均(bps)"]]
+        fan = fans.get(s)
         stocks.append({"c": code, "n": info.loc[s, "name"], "s": info.loc[s, "sector"], "m": info.loc[s, "market"],
                        "z": info.loc[s, "size"], "v": "".join(VCODE.get(v, "-") for v in g["判定"]), "mu": mean,
-                       "k": k, "sim": bool(want_sim)})
+                       "k": k, "sim": bool(want_sim), "t": fan["t"] if fan else "", "p": fan["p"] if fan else None})
+        if fan:
+            fchunks.setdefault(k, {})[code] = fan
     for k, obj in chunks.items():
         (out / f"detail_{k}.json").write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")))
+    for k, obj in fchunks.items():
+        (out / f"fwd_{k}.json").write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")))
     if want_sim:
         for i, s in enumerate(syms):
             write_sim(s, cal_pos, out / "sim")
@@ -169,6 +174,7 @@ def main() -> int:
         "fdr": int(((df["FDR補正p"] < .05) & (df["平均(bps)"] > 0)).sum()),
         "pass": int((df["判定"] == "有望(要追試)").sum()),
         "rules": rules, "stocks": stocks, "detailCols": DETAIL_COLS,
+        "fanH": scan.FAN_H, "fanQ": scan.FAN_Q, "lastDate": calendar[-1],
     }
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, separators=(",", ":")))
     size = sum(p.stat().st_size for p in out.rglob("*.json")) / 1e6

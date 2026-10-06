@@ -92,7 +92,7 @@ def pooled_main(n_stocks: int = 60, n_sims: int = 30) -> int:
         cal = [x.strftime("%Y-%m-%d") for x in idx]
         cs = H.daily_hypotheses(H.daily_features(frames[0][1]))
         meta = {c.name: (c.family, c.horizon, c.meta.get("basis"), c.meta.get("sign")) for c in cs}
-        _, agg = scan.scan_frames(frames, cal, 0.0, 0.7, 0, list(meta))
+        _, agg, _ = scan.scan_frames(frames, cal, 0.0, 0.7, 0, list(meta))
         pdf = scan.pool_rules(agg, meta, cal, 0.7)
         A += list(pdf["p"].dropna()); E += list(pdf["pe"].dropna())
         eff += int(pdf["verdict"].isin(["市場全体で有効", "他銘柄より優位"]).sum())

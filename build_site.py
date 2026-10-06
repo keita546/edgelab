@@ -24,7 +24,10 @@ for name in ("all", "topix100"):
     if not (d / "summary.json").exists():
         continue
     udata[name] = json.loads((d / "summary.json").read_text(encoding="utf-8"))
-    for f in list(d.glob("detail_*.json")) + list((d / "sim").glob("*.json")):
+    # 予想画面の値動きデータは、いちばん広い範囲(全銘柄があれば全銘柄)のものだけ使う
+    use_fwd = name == "all" or not (root / "out" / "universe_all" / "summary.json").exists()
+    fwd = list(d.glob("fwd_*.json")) if use_fwd else []
+    for f in list(d.glob("detail_*.json")) + fwd + list((d / "sim").glob("*.json")):
         dst = site / "u" / name / f.relative_to(d)
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(f, dst)

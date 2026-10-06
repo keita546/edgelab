@@ -26,6 +26,8 @@
   --good:#0ca30c; --good-ink:#4fd04f; --warn:#fab219; --warn-ink:#fac353; color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:24px 64px}
 .view{display:grid;gap:44px}
@@ -286,6 +288,58 @@ table.st{border-collapse:collapse;width:100%;min-width:680px;font-size:13px}
 .st tbody tr:hover td{background:var(--bg)}
 .st tr.sel td{background:var(--accent-soft)}
 .st .cd{font-family:var(--f-num);color:var(--ink-2)}
+/* ahead (これからの予想) */
+.ah-steps{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);grid-template-rows:auto 1fr;gap:16px;align-items:start}
+.ah-steps .s2{grid-column:2;grid-row:1 / span 2}
+@media (max-width:860px){.ah-steps{grid-template-columns:minmax(0,1fr)}.ah-steps .s2{grid-column:auto;grid-row:auto}}
+.ah-step{gap:10px}
+.ah-step h2{font-size:17px;display:flex;align-items:center;gap:10px}
+.stepno{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--bg);font-family:var(--f-num);font-size:13px;font-weight:600;flex:none}
+.ah-q{position:relative}
+.ah-q input{width:100%;font:inherit;font-size:15px;padding:10px 14px;border:1px solid var(--axis);border-radius:var(--r);background:var(--bg);color:var(--ink)}
+.sug{display:grid;gap:2px;max-height:260px;overflow:auto}
+.sug button{display:flex;gap:10px;align-items:baseline;text-align:left;border:0;background:transparent;padding:7px 10px;border-radius:5px;cursor:pointer;font-size:14px}
+.sug button:hover,.sug button:focus-visible{background:var(--bg)}
+.sug .cd{font-family:var(--f-num);color:var(--ink-2);font-size:12.5px;min-width:3.4em}
+.sug .sc{color:var(--muted);font-size:12px;margin-left:auto;white-space:nowrap}
+.cur{display:grid;gap:2px;padding:10px 12px;border-radius:var(--r);background:var(--accent-soft)}
+.cur b{font-size:17px}
+.cur span{font-size:12.5px;color:var(--ink-2)}
+.rlist{display:grid;gap:4px;max-height:470px;overflow:auto;padding-right:2px}
+.rbtn{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:4px 10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:var(--r);padding:8px 10px;cursor:pointer}
+.rbtn:hover{border-color:var(--axis)}
+.rbtn[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.rbtn .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--axis)}
+.rbtn[aria-checked="true"] .dot{border-color:var(--accent);background:radial-gradient(var(--accent) 45%,transparent 50%)}
+.rbtn .nm{font-size:13.5px;line-height:1.4}
+.rbtn .sub{grid-column:2 / 4;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--muted)}
+.today{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--bg);background:var(--accent);border-radius:999px;padding:1px 9px;white-space:nowrap}
+.hzs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.hzs button{border:1px solid var(--line);background:var(--bg);border-radius:var(--r);padding:9px 6px;cursor:pointer;font-size:14px}
+.hzs button small{display:block;font-size:11px;color:var(--muted)}
+.hzs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.hzs button[aria-pressed="true"] small{color:var(--bg);opacity:.75}
+.ah-result{gap:16px}
+.ah-say{font-size:clamp(17px,2.2vw,21px);line-height:1.6;font-weight:500;text-wrap:balance}
+.ah-say b{font-family:var(--f-num)}
+.out3{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.out3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.oc{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:2px;min-width:0}
+.oc .k{font-size:12.5px;color:var(--ink-2)}
+.oc .v{font-family:var(--f-num);font-size:24px;font-weight:600;line-height:1.2}
+.oc .s{font-family:var(--f-num);font-size:12.5px;color:var(--ink-2);overflow-wrap:anywhere}
+.oc.mid{border-color:var(--accent);background:var(--accent-soft)}
+.cmp{font-size:14px;line-height:1.8;color:var(--ink-2);max-width:72ch}
+.cmp b{color:var(--ink)}
+.caution{font-size:12.5px;color:var(--ink-2);border-left:3px solid var(--warn);padding:4px 0 4px 12px;max-width:76ch}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px}
+.trow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:8px 10px;cursor:pointer}
+.trow:hover{border-color:var(--axis)}
+.trow .cd{font-family:var(--f-num);color:var(--ink-2);font-size:12.5px}
+.trow .nm{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trow .sub{grid-column:1 / 3;display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--muted)}
+.intro{font-size:13px;color:var(--ink-2);background:var(--surface);border:1px dashed var(--axis);border-radius:var(--r);padding:10px 14px;max-width:80ch}
 footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;display:grid;gap:6px;margin-top:44px}
 @media (prefers-reduced-motion:no-preference){.fr,.cell,.tab,.fam{transition:background-color .12s,box-shadow .12s}}
 </style>
@@ -294,21 +348,64 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
   <div class="top-in">
     <div class="brand">エッジ検定ボード<small id="gen-s"></small></div>
     <nav class="views" aria-label="画面">
-      <a href="#market" data-v="market">市場全体</a>
-      <a href="#results" data-v="results">6銘柄の詳細</a>
-      <a href="#sim" data-v="sim">シミュレーター</a>
-      <a href="#rules" data-v="rules">ルール辞典</a>
-      <a href="#manual" data-v="manual">説明書</a>
+      <a href="#ahead" data-v="ahead">これからの予想</a>
+      <a href="#sim" data-v="sim">過去で試す</a>
+      <a href="#market" data-v="market">買い方の成績</a>
+      <a href="#rules" data-v="rules">買い方の一覧</a>
+      <a href="#results" data-v="results">くわしい分析</a>
+      <a href="#manual" data-v="manual">使い方</a>
     </nav>
   </div>
 </header>
 
 <div class="wrap">
+<!-- ===================== これからの予想 ===================== -->
+<main class="view" id="v-ahead">
+  <header class="hero">
+    <div class="eyebrow" id="ah-asof"></div>
+    <h1>この株をいま買ったら、<br>この先どうなりそう？</h1>
+    <p class="lead">過去15年には「同じような場面」が何度もありました。そのあと株価がどれくらい上がり下がりしたかを、今日の株価とこれからの日付に当てはめて見せます。未来を当てるものではなく、<strong>過去の結果の幅</strong>です。</p>
+  </header>
+  <div class="ah-steps">
+    <section class="panel ah-step s1" aria-labelledby="h-s1">
+      <h2 id="h-s1"><span class="stepno">1</span>銘柄をえらぶ</h2>
+      <div class="ah-q"><input type="search" id="ah-q" placeholder="会社名かコード（例：トヨタ、7203）" aria-label="銘柄を検索" autocomplete="off"></div>
+      <div class="sug" id="ah-sug"></div>
+      <div class="cur" id="ah-cur"></div>
+    </section>
+    <section class="panel ah-step s2" aria-labelledby="h-s2">
+      <h2 id="h-s2"><span class="stepno">2</span>買い方をえらぶ</h2>
+      <p class="note">「今日サインあり」は、最新の取引日にその条件に当てはまったものです。印はこの銘柄での過去の成績です（手数料込み）。</p>
+      <div class="rlist" role="radiogroup" aria-labelledby="h-s2" id="ah-rules"></div>
+    </section>
+    <section class="panel ah-step s3" aria-labelledby="h-s3">
+      <h2 id="h-s3"><span class="stepno">3</span>どれくらい持つ？</h2>
+      <div class="hzs" role="group" aria-label="持つ期間" id="ah-hz"></div>
+      <div class="field"><label for="ah-amt">いくら分買う？（円）</label><input type="number" id="ah-amt" min="10000" step="100000" value="1000000"></div>
+    </section>
+  </div>
+  <section class="panel ah-result" id="ah-result" aria-live="polite"></section>
+
+  <section class="sec" aria-labelledby="h-ah-today">
+    <div class="sec-head">
+      <h2 id="h-ah-today">今日サインが出ている銘柄</h2>
+      <p id="ah-today-lead"></p>
+    </div>
+    <div class="finder">
+      <div class="field grow"><label for="ah-trule">買い方</label><select id="ah-trule"></select></div>
+      <div class="field"><span class="lab">範囲</span><div class="useg" role="group" aria-label="範囲" id="ah-tscope"></div></div>
+    </div>
+    <div class="tlist" id="ah-tlist"></div>
+    <div><button type="button" class="btn ghost" id="ah-tmore" hidden>もっと見る</button></div>
+  </section>
+</main>
+
 <!-- ===================== 市場全体 ===================== -->
 <main class="view" id="v-market" hidden>
   <header class="hero">
     <div class="eyebrow" id="mk-gen"></div>
-    <h1>全銘柄に当てても<br>効くルールはあるか</h1>
+    <h1>買い方の成績<br>（全銘柄でまとめて）</h1>
+    <p class="intro">ここはくわしい人向けの画面です。ひとことで言うと「その買い方は、どの銘柄でもだいたい効くのか」を調べています。むずかしい言葉は<a href="#manual-glossary">使い方の用語集</a>で説明しています。</p>
     <p class="lead" id="mk-lead"></p>
     <div class="useg" role="group" aria-label="銘柄の範囲" id="mk-u"></div>
     <div class="funnel" id="mk-funnel"></div>
@@ -353,7 +450,8 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 <main class="view" id="v-results">
   <header class="hero">
     <div class="eyebrow" id="gen"></div>
-    <h1>どの売買ルールが<br>統計の関門を越えたか</h1>
+    <h1>くわしい分析<br>（6銘柄・5分足つき）</h1>
+    <p class="intro">ここは統計にくわしい人向けの画面です。トヨタ・ソニーなど6銘柄を、5分足も含めて詳しく調べた結果です。言葉の意味は<a href="#manual-glossary">使い方の用語集</a>にあります。</p>
     <p class="lead" id="lead"></p>
     <div class="funnel" id="funnel"></div>
     <div class="finding" id="finding"></div>
@@ -404,9 +502,9 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 <!-- ===================== シミュレーター ===================== -->
 <main class="view" id="v-sim" hidden>
   <div class="sec-head">
-    <div class="eyebrow">資金シミュレーション</div>
-    <h1>そのルールで実際に<br>売買していたら</h1>
-    <p class="lead">ルールが出した売買を1回ずつ、資金と100株単位の制約つきで再現します。条件を変えるとすぐ計算し直します。</p>
+    <div class="eyebrow">過去で試す</div>
+    <h1>この買い方で、過去15年<br>売買していたら</h1>
+    <p class="lead">選んだ買い方のとおりに、過去15年間ずっと売買を続けていたら、お金がどう増えたか（減ったか）を1回ずつ計算します。100株単位や手数料も入れています。条件を変えるとすぐ計算し直します。</p>
   </div>
   <div class="simgrid">
     <form class="panel simform" id="simf" autocomplete="off">
@@ -454,9 +552,9 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 <!-- ===================== ルール辞典 ===================== -->
 <main class="view" id="v-rules" hidden>
   <div class="sec-head">
-    <div class="eyebrow">ルール辞典</div>
-    <h1>検定した売買ルール</h1>
-    <p class="lead">各ルールがどんな条件で、いつ入って、いつ出るか。下の色付きの枠は銘柄ごとの結果で、押すとその銘柄の詳細を開きます。</p>
+    <div class="eyebrow">買い方の一覧</div>
+    <h1>調べた買い方</h1>
+    <p class="lead">それぞれの買い方が、どんなときに買って、いつ売るのか。下の色の枠は6銘柄での1回あたりの成績（赤がプラス、青がマイナス）で、押すと詳しい結果を開きます。</p>
   </div>
   <div class="filters" data-filter="rules"></div>
   <div class="rules" id="rules"></div>
@@ -466,12 +564,13 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 <main class="view" id="v-manual" hidden>
   <div class="sec-head">
     <div class="eyebrow">説明書</div>
-    <h1>エッジ検定ボードの使い方</h1>
-    <p class="lead">このボードは「過去のデータで、ある売買ルールに偶然では説明しにくい優位性があったか」を調べる道具です。画面の読み方、統計用語、シミュレーターの前提、データの更新方法をまとめました。</p>
+    <h1>使い方</h1>
+    <p class="lead">最初は「これからの予想」だけ使えば十分です。下の「まずはこれだけ」を読んでください。2番目以降は、くわしく知りたくなったときに読む部分です。</p>
   </div>
   <div class="manual">
     <nav class="toc" aria-label="目次">
       <div class="eyebrow">目次</div>
+      <a href="#manual-start">まずはこれだけ</a>
       <a href="#manual-about">1. わかること・わからないこと</a>
       <a href="#manual-screens">2. 画面の構成</a>
       <a href="#manual-market">3. 市場全体の読み方</a>
@@ -486,6 +585,46 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       <a href="#manual-limits">12. 限界と注意</a>
     </nav>
     <div class="doc">
+      <section id="m-start">
+        <h2>まずはこれだけ</h2>
+        <h3>「これからの予想」の使い方</h3>
+        <ol>
+          <li><strong>銘柄をえらぶ</strong>：会社名かコードを入れて、出てきた候補を押します。</li>
+          <li><strong>買い方をえらぶ</strong>：一番上の「いつ買っても（条件なし）」が比べる基準です。青い「今日サインあり」が付いた買い方は、最新の取引日にその条件に当てはまったものです。</li>
+          <li><strong>どれくらい持つかをえらぶ</strong>：1日〜3か月から選びます。いくら分買うかを入れると、金額でも表示します。</li>
+        </ol>
+        <p>すると、今日の株価から売る日までの「株価の幅」が出ます。</p>
+        <ul>
+          <li><strong>ふつう（真ん中）</strong>：過去の同じ場面を成績順に並べたとき、ちょうど真ん中だった結果。</li>
+          <li><strong>悪かったとき／よかったとき</strong>：下から1割・上から1割の結果。10回に1回くらいは、これより悪い（よい）ことがあった、という意味です。</li>
+          <li><strong>上がっていた割合</strong>：過去の同じ場面のうち、売る日に買った値段より上がっていた回の割合。</li>
+          <li><strong>グラフの帯</strong>：濃い帯の中に半分、薄い帯の中に8割が入っていました。</li>
+        </ul>
+        <h3>印の意味</h3>
+        <table>
+          <tr><th style="width:36%">印</th><th>意味</th></tr>
+          <tr><td><span class="chip good"><span class="glyph">◎</span>確かめられた</span></td><td>その銘柄でこの買い方は、手数料を引いても、偶然では説明しにくいプラスでした。</td></tr>
+          <tr><td><span class="chip warn"><span class="glyph">○</span>ほぼ確か</span></td><td>プラスでしたが、最後の一番厳しい確認には届きませんでした。</td></tr>
+          <tr><td><span class="chip mute"><span class="glyph">△</span>たまたまかも</span></td><td>プラスに見えましたが、たくさん試した中の偶然の可能性が高いです。</td></tr>
+          <tr><td><span class="chip mute"><span class="glyph">×</span>はっきりしない</span></td><td>はっきりした違いは見つかりませんでした。</td></tr>
+          <tr><td><span class="chip neg"><span class="glyph">▼</span>逆効果だった</span></td><td>手数料を引くと、むしろ損をしていました。</td></tr>
+        </table>
+        <h3>気をつけてほしいこと</h3>
+        <ul>
+          <li>これは<strong>過去の結果の幅</strong>で、未来を当てるものではありません。過去に効いていた買い方が、これからも効くとは限りません。</li>
+          <li>「◎」が付いていても、「いつ買っても」と比べてどれだけ良いかを見てください。差が小さければ、条件を付ける意味はあまりありません。</li>
+          <li>「過去で試す」で、その買い方を15年続けた場合と、最初に買ってずっと持っていた場合を比べられます。多くの銘柄では、ずっと持っていた方が増えています。</li>
+          <li>株価は最新の取引日の引けまでです。新しいデータにするには「9. データの更新」の手順を実行します。</li>
+        </ul>
+        <h3>ほかの画面</h3>
+        <table>
+          <tr><td><a href="#sim">過去で試す</a></td><td>その買い方で過去15年売買を続けたら、お金がどうなったか</td></tr>
+          <tr><td><a href="#market">買い方の成績</a></td><td>その買い方が、全銘柄でまとめて見て効くのか（くわしい人向け）</td></tr>
+          <tr><td><a href="#rules">買い方の一覧</a></td><td>それぞれの買い方の、いつ買っていつ売るかの説明</td></tr>
+          <tr><td><a href="#results">くわしい分析</a></td><td>6銘柄を5分足も含めて統計的に詳しく調べた結果（くわしい人向け）</td></tr>
+        </table>
+      </section>
+
       <section id="m-about">
         <h2>1. わかること・わからないこと</h2>
         <p><strong>わかること</strong>：過去15年（日経平均は25年）の株価で、あるルールどおりに売買していたら、手数料を引いたあとも平均してプラスだったか。そしてそのプラスが「たくさん試したうちの偶然の当たり」で説明できてしまわないか。</p>
@@ -704,6 +843,8 @@ add(_mk("順張り:5日線上抜け→3日保有", "モメンタム", d, cross, 
 const D = JSON.parse(document.getElementById('data').textContent);
 const S = D.symbols;
 const U = JSON.parse(document.getElementById('udata').textContent || '{}');
+const UA = U.all || U.topix100 || null;
+const UAKEY = U.all ? 'all' : 'topix100';
 const HEAD = '逆張り:RSI2<10→5日保有';
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -767,7 +908,7 @@ rules.forEach(r => { if (FAMS.indexOf(r.family) < 0) FAMS.push(r.family); });
 
 /* ---------- search & filter state ---------- */
 const norm = s => String(s).normalize('NFKC').toLowerCase().replace(/\s+/g, '');
-rules.forEach(r => { r.hay = norm([r.name, r.family, r.doc.cond, r.doc.entry, r.doc.exit, r.doc.idea, r.doc.side].join(' ')); });
+rules.forEach(r => { r.hay = norm([r.name, r.doc.plain || '', r.family, r.doc.cond, r.doc.entry, r.doc.exit, r.doc.idea, r.doc.side].join(' ')); });
 const F = { q: '', v: 'all', fams: [] };
 const VOPTS = [['all', 'すべての判定'], ['pass', '◎ 全関門通過'], ['near', '○ 補正は通過（惜しい）'], ['gone', '多重検定で消滅'], ['none', '優位性なし'], ['neg', '▼ 有意にマイナス']];
 function vclass(v) {
@@ -839,13 +980,14 @@ const state = { view: 'results', si: Math.max(0, firstPass), name: HEAD };
 function applyRoute(h) {
   h = h || '';
   const head = h.split('-')[0];
-  const VIEWS = ['market', 'results', 'sim', 'rules', 'manual'];
-  const view = VIEWS.indexOf(head) >= 0 ? head : (U.all || U.topix100 ? 'market' : 'results');
+  const VIEWS = ['ahead', 'market', 'results', 'sim', 'rules', 'manual'];
+  const view = VIEWS.indexOf(head) >= 0 ? head : (UA ? 'ahead' : 'results');
   state.view = view;
   VIEWS.forEach(v => { $('v-' + v).hidden = v !== view; });
   document.querySelectorAll('nav.views a').forEach(a => { if (a.dataset.v === view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   if (view === 'sim') runSim();
   if (view === 'market') renderMarket();
+  if (view === 'ahead') renderAhead();
   if (view === 'results') { const s = S[state.si]; renderEq(s, findRow(s, state.name)); }
   const sub = h.indexOf('-') > 0 ? $('m-' + h.split('-').slice(1).join('-')) : null;
   if (sub) sub.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -860,6 +1002,7 @@ document.addEventListener('click', e => {
   e.preventDefault();
   if (a.dataset.simkey) setSim(a.dataset.simkey, a.dataset.simrule);
   go(a.getAttribute('href').slice(1));
+  if (a.dataset.mkstock) { MK.u = UAKEY; MK.built = false; renderMarket(); MK.sel = a.dataset.mkstock; MK.selRule = MK.rule; openStock(MK.sel); }
 });
 addEventListener('hashchange', () => applyRoute(location.hash.slice(1)));
 
@@ -1239,7 +1382,7 @@ function fillSimSym() {
 function fillSimRule() {
   const s = SIM.s, rs = simRules(s);
   const sc = nm => { const rb = ruleBy.get(nm); return rb ? ruleScore(rb) : 0; };
-  const opt = r => { const g = glyphOf(r.verdict); return '<option value="' + esc(r.name) + '">' + (g ? g[0] + ' ' : '') + esc(r.name) + '（' + sg(r.mean) + 'bps）</option>'; };
+  const opt = r => { const g = glyphOf(r.verdict); return '<option value="' + esc(r.name) + '">' + (g ? g[0] + ' ' : '') + esc((r.doc && r.doc.plain) || r.name) + '</option>'; };
   const d = rs.filter(r => !isIntra(r)).sort((a, b) => sc(b.name) - sc(a.name));
   const i = rs.filter(isIntra);
   $('sim-rule').innerHTML = '<optgroup label="日足ルール">' + d.map(opt).join('') + '</optgroup>' + (i.length ? '<optgroup label="5分足ルール（約2か月分）">' + i.map(opt).join('') + '</optgroup>' : '');
@@ -1306,7 +1449,7 @@ function renderSimOut() {
   const pfv = res.gl > 0 ? res.gw / res.gl : (res.gw > 0 ? Infinity : NaN);
   const pct = v => (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(1) + '%';
   const intra = isIntra(r);
-  $('sim-head').innerHTML = esc(s.label) + 'で「' + esc(r.name) + '」を' + s.dates[o.start] + 'から' + s.dates[o.end] + 'まで続けると、' +
+  $('sim-head').innerHTML = esc(s.label) + 'で「' + esc((r.doc && r.doc.plain) || r.name) + '」を' + s.dates[o.start] + 'から' + s.dates[o.end] + 'まで続けると、' +
     '<b>' + yenShort(o.cap) + '円</b>は<b class="' + (res.final >= o.cap ? 'up' : 'dn') + '">' + yen(res.final) + '（' + pct(res.final / o.cap - 1) + '）</b>になりました。' +
     (intra ? '' : '同じ期間、最初に全額買って持ち続けていれば<b>' + yen(bhFinal) + '（' + pct(bhFinal / o.cap - 1) + '）</b>です。');
   const warns = [];
@@ -1446,8 +1589,8 @@ function renderRules() {
       const g = glyphOf(c.verdict);
       return '<button type="button" class="tk-cell" data-si="' + si + '" data-name="' + esc(n.name) + '" style="background:' + cellBg(c.mean) + (rowOk(c) ? '' : ';opacity:.35') + '" aria-label="' + esc(s.label + ' 平均' + sg(c.mean) + 'bps ' + c.verdict) + '">' + esc(s.label.slice(0, 4)) + '<span>' + (g ? '<b style="color:' + g[1] + '">' + g[0] + '</b>' : '') + sg(c.mean, 0) + '</span></button>';
     }).join('');
-    return '<article class="rule"><div class="hd"><h3>' + hl(n.name) + '</h3>' + (top ? chip(top) : '') + '</div>' +
-      '<div class="fm">' + esc(n.family) + ' · ' + esc(n.doc.side) + (n.intra ? ' · 5分足' : ' · 日足') + '</div>' +
+    return '<article class="rule"><div class="hd"><h3>' + hl(n.doc.plain || n.name) + '</h3>' + (top ? chip(top) : '') + '</div>' +
+      '<div class="fm">' + esc(n.name) + ' · ' + esc(n.doc.side) + (n.intra ? ' · 5分足' : ' · 日足') + '</div>' +
       '<dl><dt>条件</dt><dd>' + hl(n.doc.cond) + '</dd><dt>入り</dt><dd>' + hl(n.doc.entry) + '</dd><dt>出口</dt><dd>' + hl(n.doc.exit) + '</dd><dt>狙い</dt><dd>' + hl(n.doc.idea) + '</dd></dl>' +
       '<div class="tk-row">' + cells + '</div>' +
       '<div class="acts"><a class="btn ghost" href="#results" data-act="res" data-si="' + best[1] + '" data-name="' + esc(n.name) + '">結果を見る</a>' +
@@ -1461,6 +1604,221 @@ $('rules').addEventListener('click', e => {
   state.si = si; state.name = name; renderDetail();
   if (!b.dataset.act) go('results');
   setTimeout(() => $('detail-sec').scrollIntoView({ behavior: 'auto', block: 'start' }), 0);
+});
+
+/* ---------- これからの予想 ---------- */
+// 東証の休日（2026年10月〜2027年末）。週末はこれとは別に除く
+const JP_HOLI = new Set(['2026-10-12', '2026-11-03', '2026-11-23', '2026-12-31', '2027-01-01', '2027-01-02', '2027-01-03', '2027-01-11',
+  '2027-02-11', '2027-02-23', '2027-03-22', '2027-04-29', '2027-05-03', '2027-05-04', '2027-05-05', '2027-07-19', '2027-08-11',
+  '2027-09-20', '2027-09-23', '2027-10-11', '2027-11-03', '2027-11-23', '2027-12-31']);
+const WD = '日月火水木金土';
+function bizDays(fromIso, n) {
+  const out = []; const d = new Date(fromIso + 'T00:00:00Z');
+  while (out.length < n) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const iso = d.toISOString().slice(0, 10), w = d.getUTCDay();
+    if (w !== 0 && w !== 6 && !JP_HOLI.has(iso)) out.push(iso);
+  }
+  return out;
+}
+const mdw = iso => { const d = new Date(iso + 'T00:00:00Z'); return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + '(' + WD[d.getUTCDay()] + ')'; };
+const HZS = [[1, '1日', '翌日に売る'], [5, '1週間', '5営業日'], [10, '2週間', '10営業日'], [20, '1か月', '20営業日'], [40, '2か月', '40営業日'], [60, '3か月', '60営業日']];
+const REL = {
+  P: ['good', '◎', '確かめられた'], N: ['warn', '○', 'ほぼ確か'], G: ['mute', '△', 'たまたまかも'], '-': ['mute', '×', 'はっきりしない'], M: ['neg', '▼', '逆効果だった'],
+};
+const relChip = c => { const r = REL[c] || REL['-']; return '<span class="chip ' + r[0] + '"><span class="glyph">' + r[1] + '</span>' + r[2] + '</span>'; };
+const RELRANK = 'PNG-M';
+const AH = { code: null, rule: 'base', hz: 20, tscope: 'all', tshown: 40, trule: HEAD, fw: null };
+const FWD = {};
+function loadFwd(k) {
+  if (!FWD[k]) FWD[k] = loadJSON('u/' + UAKEY + '/fwd_' + k + '.json').catch(err => { delete FWD[k]; throw err; });
+  return FWD[k];
+}
+const yenP = v => (v >= 100 ? Math.round(v).toLocaleString('ja-JP') : v.toFixed(1)) + '円';
+const pctS = (q, d) => (q > 0 ? '+' : q < 0 ? '−' : '±') + Math.abs(q / 10).toFixed(d === undefined ? 1 : d) + '%';
+function fanAt(arr, hz) {   // [p10,p25,p50,p75,p90,up,n] (0.1%単位)
+  const i = UA.fanH.indexOf(hz); if (i < 0 || !arr) return null;
+  const v = arr.slice(i * 7, i * 7 + 7); return v[0] === null ? null : v;
+}
+function fanInterp(arr, k) {   // k 営業日後の分位点（区間で直線補間）
+  const H = [0].concat(UA.fanH);
+  const at = j => j === 0 ? [0, 0, 0, 0, 0] : arr.slice((j - 1) * 7, (j - 1) * 7 + 5);
+  for (let j = 1; j < H.length; j++) if (k <= H[j]) {
+    const a = at(j - 1), b = at(j), t = (k - H[j - 1]) / (H[j] - H[j - 1]);
+    if (b[0] === null) return null;
+    return a.map((x, q) => (x === null ? 0 : x) + ((b[q]) - (x === null ? 0 : x)) * t);
+  }
+  return null;
+}
+function ahStock() { return UA.stocks.find(x => x.c === AH.code); }
+function initAhead() {
+  if (!UA) { $('v-ahead').innerHTML = '<div class="empty">予想用のデータがありません。<code>scan.py</code> を実行してから作り直してください。</div>'; return; }
+  if (!AH.code) AH.code = (UA.stocks.find(x => x.c === '7203') || UA.stocks[0]).c;
+  $('ah-hz').innerHTML = HZS.map(h => '<button type="button" data-hz="' + h[0] + '" aria-pressed="' + (h[0] === AH.hz) + '">' + h[1] + '<small>' + h[2] + '</small></button>').join('');
+  const opts = UA.rules.map((r, i) => r.family === '時間帯' ? '' : '<option value="' + esc(r.name) + '">' + esc(r.doc.plain) + '</option>').join('');
+  $('ah-trule').innerHTML = opts; $('ah-trule').value = AH.trule;
+  $('ah-tscope').innerHTML = [['all', '全銘柄'], ['topix100', '主要100銘柄']].filter(x => x[0] === 'all' || U.topix100).map(x => '<button type="button" data-s="' + x[0] + '" aria-pressed="' + (AH.tscope === x[0]) + '">' + x[1] + '</button>').join('');
+  initAhead.done = true;
+}
+function renderAhead() {
+  if (!initAhead.done) initAhead();
+  if (!UA) return;
+  $('ah-asof').textContent = '株価は ' + mdw(UA.lastDate) + ' の引けまで · 東証 ' + UA.nStocks.toLocaleString() + ' 銘柄';
+  renderAhSug(); renderAhCur(); renderAhToday();
+  const st = ahStock();
+  $('ah-rules').innerHTML = '<div class="empty">読み込み中…</div>';
+  $('ah-result').innerHTML = '<div class="empty">読み込み中…</div>';
+  loadFwd(st.k).then(obj => {
+    if (AH.code !== st.c) return;
+    AH.fw = obj[st.c] || null;
+    renderAhRules(); renderAhResult();
+  }).catch(err => {
+    $('ah-result').innerHTML = '<div class="empty">データを読み込めませんでした（' + esc(err.message) + '）。手元の HTML を直接開いている場合は、<a href="#manual-update">使い方の「データの更新」</a>の方法で開いてください。</div>';
+    $('ah-rules').innerHTML = '';
+  });
+}
+function renderAhSug() {
+  const terms = $('ah-q').value.split(/\s+/).map(norm).filter(Boolean);
+  if (!terms.length) { $('ah-sug').innerHTML = ''; return; }
+  const list = UA.stocks.filter(x => { const h = x.hay || (x.hay = norm(x.c + ' ' + x.n + ' ' + x.s)); return terms.every(t => h.indexOf(t) >= 0); })
+    .sort((a, b) => (a.c === terms[0] ? -1 : 0) - (b.c === terms[0] ? -1 : 0) || a.c.localeCompare(b.c)).slice(0, 8);
+  $('ah-sug').innerHTML = list.length ? list.map(x => '<button type="button" data-c="' + esc(x.c) + '"><span class="cd">' + esc(x.c) + '</span><span>' + hl(x.n) + '</span><span class="sc">' + esc(x.s) + '</span></button>').join('')
+    : '<p class="note">見つかりませんでした。会社名の一部かコード4桁で探してください。</p>';
+}
+function renderAhCur() {
+  const st = ahStock();
+  $('ah-cur').innerHTML = '<b>' + esc(st.n) + '</b><span>' + esc(st.c) + ' · ' + esc(st.s) + ' · ' + esc(st.m) + (st.p ? ' · 最新の株価 ' + yenP(st.p) : '') + '</span>';
+}
+function pickStock(code) { AH.code = code; $('ah-q').value = ''; renderAhSug(); renderAhead(); }
+$('ah-q').addEventListener('input', renderAhSug);
+$('ah-q').addEventListener('keydown', e => { if (e.key === 'Enter') { const b = $('ah-sug').querySelector('button[data-c]'); if (b) pickStock(b.dataset.c); } if (e.key === 'Escape') { e.target.value = ''; renderAhSug(); } });
+$('ah-sug').addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (b) pickStock(b.dataset.c); });
+function ahRuleList() {
+  const st = ahStock(), fw = AH.fw;
+  const list = [{ key: 'base', plain: 'いつ買っても（条件なし）', today: true, rel: null, fan: fw && fw.f[fw.f.length - 1] }];
+  UA.rules.forEach((r, i) => {
+    if (!fw || !fw.f[i]) return;
+    list.push({ key: r.name, plain: r.doc.plain, today: st.t.charAt(i) === '1', rel: st.v.charAt(i), fan: fw.f[i], side: r.doc.side, ago: fw.ago[i], i: i });
+  });
+  const head = list.shift();
+  list.sort((a, b) => (b.today - a.today) || (RELRANK.indexOf(a.rel) - RELRANK.indexOf(b.rel)) || a.plain.localeCompare(b.plain, 'ja'));
+  return [head].concat(list);
+}
+function renderAhRules() {
+  const list = ahRuleList();
+  if (!list.some(x => x.key === AH.rule)) AH.rule = 'base';
+  $('ah-rules').innerHTML = list.map(x => {
+    const fz = fanAt(x.fan, AH.hz);
+    const sub = x.key === 'base' ? '比べる基準 · 過去 ' + (fz ? fz[6].toLocaleString() : '—') + '回'
+      : (x.today ? '<span class="today">今日サインあり</span>' : (x.ago !== null && x.ago !== undefined ? '最後のサインは ' + x.ago + ' 営業日前' : 'サインなし')) + ' · 過去 ' + (fz ? fz[6].toLocaleString() : '—') + '回' + (x.side === '売り' ? ' · 空売り' : '');
+    return '<button type="button" class="rbtn" role="radio" aria-checked="' + (x.key === AH.rule) + '" data-k="' + esc(x.key) + '"><span class="dot"></span><span class="nm">' + esc(x.plain) + '</span>' + (x.rel ? relChip(x.rel) : '<span></span>') + '<span class="sub">' + sub + '</span></button>';
+  }).join('');
+}
+$('ah-rules').addEventListener('click', e => { const b = e.target.closest('.rbtn'); if (!b) return; AH.rule = b.dataset.k; renderAhRules(); renderAhResult(); });
+$('ah-hz').addEventListener('click', e => {
+  const b = e.target.closest('button[data-hz]'); if (!b) return;
+  AH.hz = +b.dataset.hz; $('ah-hz').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.hz === AH.hz)));
+  renderAhRules(); renderAhResult();
+});
+$('ah-amt').addEventListener('input', () => renderAhResult());
+function renderAhResult() {
+  const st = ahStock(), fw = AH.fw; if (!fw) return;
+  const list = ahRuleList(), sel = list.find(x => x.key === AH.rule) || list[0], base = list[0];
+  const fz = fanAt(sel.fan, AH.hz), bz = fanAt(base.fan, AH.hz);
+  const fut = bizDays(fw.d, 60), sellDay = fut[AH.hz - 1], price = fw.p;
+  const amt = Math.max(10000, +$('ah-amt').value || 1000000);
+  if (!fz) { $('ah-result').innerHTML = '<div class="empty">この買い方は、この銘柄では過去の回数が少なすぎて幅を出せません。別の買い方を選んでください。</div>'; return; }
+  const money = q => { const v = amt * q / 1000; return (v >= 0 ? '+' : '−') + yenShort(Math.abs(v)) + '円'; };
+  const card = (k, q, cls) => '<div class="oc ' + (cls || '') + '"><div class="k">' + k + '</div><div class="v ' + (q >= 0 ? 'up' : 'dn') + '">' + pctS(q) + '</div><div class="s">' + yenP(price * (1 + q / 1000)) + ' · ' + money(q) + '</div></div>';
+  const isShort = sel.side === '売り';
+  const sayRule = sel.key === 'base' ? '' : '「' + esc(sel.plain) + '」の条件で';
+  const lot = price * 100;
+  let html = '<p class="ah-say">' + esc(st.n) + 'を' + sayRule + ' <b>' + mdw(fw.d) + '</b> の終値 <b>' + yenP(price) + '</b> で買って、<b>' + HZS.find(h => h[0] === AH.hz)[1] + '後の ' + mdw(sellDay) + '</b> に売ると…</p>' +
+    '<div class="out3">' + card('悪かったとき（下から1割）', fz[0]) + card('ふつう（真ん中）', fz[2], 'mid') + card('よかったとき（上から1割）', fz[4]) +
+    '<div class="oc"><div class="k">上がっていた割合</div><div class="v">' + fz[5] + '%</div><div class="s">過去 ' + fz[6].toLocaleString() + ' 回中 約' + Math.round(fz[6] * fz[5] / 100).toLocaleString() + ' 回</div></div></div>' +
+    '<div class="chart" id="ah-fan"></div>';
+  const lines = [];
+  if (sel.key !== 'base' && bz) {
+    const dm = fz[2] - bz[2], du = fz[5] - bz[5];
+    lines.push('いつ買っても同じ期間なら、ふつう（真ん中）は <b>' + pctS(bz[2]) + '</b>、上がっていた割合は <b>' + bz[5] + '%</b> です。この買い方は真ん中が <b class="' + (dm >= 0 ? 'up' : 'dn') + '">' + pctS(dm) + '</b>、上がる割合が <b>' + (du >= 0 ? '+' : '−') + Math.abs(du) + 'ポイント</b> ' + (dm >= 0 ? '良い' : '悪い') + '結果でした。');
+    lines.push('この銘柄でのこの買い方の過去の成績：' + relChip(sel.rel) + '（' + ({ P: '手数料を引いても、偶然では説明しにくいプラスでした', N: 'プラスでしたが、最後の厳しい確認には届きませんでした', G: 'プラスに見えましたが、たまたまの可能性が高いです', '-': 'はっきりした違いは見つかりませんでした', M: '手数料を引くと、むしろ損をしていました' }[sel.rel] || '') + '）');
+  } else {
+    lines.push('これは条件をつけずに、過去のどの日に買っても同じ期間持った場合の幅です。ほかの買い方を選ぶと、これと比べられます。');
+  }
+  if (sel.key !== 'base' && !sel.today) lines.push('<b>この条件は今日は出ていません。</b>上の幅は、条件が出た日に買った場合のものです。条件が出ている銘柄は下の「今日サインが出ている銘柄」で探せます。');
+  if (isShort) lines.push('<b>この買い方は空売り（下がると利益）です。</b>上の数字は株価の動きなので、マイナスが大きいほど空売りでは利益になります。');
+  if (fz[6] < 30) lines.push('<b>過去の回数が ' + fz[6] + ' 回と少ないため、幅はあまり当てになりません。</b>');
+  if (amt < lot) lines.push('この銘柄を100株買うには約 <b>' + yenP(lot) + '</b> 必要です（入力した金額では1単元に届きません）。');
+  html += '<div class="cmp">' + lines.map(l => '<p>' + l + '</p>').join('') + '</div>' +
+    '<p class="caution">過去15年の値動きの幅を、今日の株価に当てはめたものです。将来も同じになるとは限らず、特定の売買をすすめるものではありません。売買手数料と税金は入っていません（配当は含みます）。</p>' +
+    '<div class="acts">' + ((SIMSET.has(st.c) || S.some(x => x.symbol === st.c + '.T')) && sel.key !== 'base' ? '<a class="btn" href="#sim" data-simkey="' + (SIMSET.has(st.c) ? 'u:' + st.c : 'd:' + S.findIndex(x => x.symbol === st.c + '.T')) + '" data-simrule="' + esc(sel.key) + '">この買い方を過去15年で試す →</a>' : '') +
+    '<a class="btn ghost" href="#market" data-mkstock="' + esc(st.c) + '">くわしい成績を見る</a></div>';
+  $('ah-result').innerHTML = html;
+  drawFan($('ah-fan'), fw, sel, fut);
+}
+function drawFan(box, fw, sel, fut) {
+  const W = Math.max(300, box.clientWidth || 640), H = 300, m = { l: 62, r: 92, t: 16, b: 30 };
+  const hz = AH.hz, past = Math.min(fw.h.length, Math.max(20, hz));
+  const ci = UA.calendar.indexOf(fw.d), endI = ci >= 0 ? ci : UA.calendar.length - 1;
+  const hist = fw.h.slice(-past), cal = UA.calendar.slice(Math.max(0, endI - past + 1), endI + 1);
+  const band = []; for (let k = 0; k <= hz; k++) { const q = fanInterp(sel.fan, k); if (q) band.push([k, q.map(x => fw.p * (1 + x / 1000))]); }
+  const xs = -(past - 1), xe = hz;
+  const allY = hist.concat(band.reduce((a, b) => a.concat([b[1][0], b[1][4]]), []));
+  let y0 = Math.min.apply(null, allY), y1 = Math.max.apply(null, allY);
+  const pad = (y1 - y0) * 0.08 || y1 * 0.02; y0 -= pad; y1 += pad;
+  const st = niceStep(y1 - y0, 5); y0 = Math.floor(y0 / st) * st; y1 = Math.ceil(y1 / st) * st;
+  const X = k => m.l + (k - xs) / ((xe - xs) || 1) * (W - m.l - m.r);
+  const Y = v => m.t + (1 - (v - y0) / ((y1 - y0) || 1)) * (H - m.t - m.b);
+  const dateAt = k => k <= 0 ? cal[cal.length - 1 + k] : fut[k - 1];
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="これからの株価の幅">';
+  for (let v = y0; v <= y1 + st * 1e-6; v += st) svg += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" stroke="var(--line)"/><text x="' + (m.l - 6) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="var(--f-num)">' + Math.round(v).toLocaleString() + '</text>';
+  svg += '<rect x="' + X(0).toFixed(1) + '" y="' + m.t + '" width="' + (X(hz) - X(0)).toFixed(1) + '" height="' + (H - m.t - m.b) + '" fill="var(--accent-soft)" fill-opacity=".5"/>';
+  const poly = (lo, hi) => 'M' + band.map(b => X(b[0]).toFixed(1) + ' ' + Y(b[1][hi]).toFixed(1)).join('L') + 'L' + band.slice().reverse().map(b => X(b[0]).toFixed(1) + ' ' + Y(b[1][lo]).toFixed(1)).join('L') + 'Z';
+  svg += '<path d="' + poly(0, 4) + '" fill="var(--accent)" fill-opacity=".16"/><path d="' + poly(1, 3) + '" fill="var(--accent)" fill-opacity=".26"/>';
+  svg += '<path d="M' + band.map(b => X(b[0]).toFixed(1) + ' ' + Y(b[1][2]).toFixed(1)).join('L') + '" fill="none" stroke="var(--accent)" stroke-width="2"/>';
+  svg += '<path d="M' + hist.map((v, i) => X(i - (past - 1)).toFixed(1) + ' ' + Y(v).toFixed(1)).join('L') + '" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>';
+  svg += '<line x1="' + X(hz).toFixed(1) + '" x2="' + X(hz).toFixed(1) + '" y1="' + m.t + '" y2="' + (H - m.b) + '" stroke="var(--ink-2)" stroke-dasharray="3 3"/>';
+  svg += '<text x="' + (X(0) + 4).toFixed(1) + '" y="' + (m.t + 11) + '" font-size="11" fill="var(--ink-2)">今日</text><circle cx="' + X(0).toFixed(1) + '" cy="' + Y(fw.p).toFixed(1) + '" r="4.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>';
+  const last = band[band.length - 1];
+  if (last) {
+    const labs = [[4, 'よかったとき'], [2, 'ふつう'], [0, '悪かったとき']].map(x => ({ y: Y(last[1][x[0]]), t: x[1], v: last[1][x[0]] }));
+    for (let i = 1; i < labs.length; i++) if (labs[i].y - labs[i - 1].y < 26) labs[i].y = labs[i - 1].y + 26;
+    labs.forEach((l, i) => { svg += '<circle cx="' + X(hz).toFixed(1) + '" cy="' + Y(last[1][[4, 2, 0][i]]).toFixed(1) + '" r="3.5" fill="var(--accent)"/><text x="' + (X(hz) + 8).toFixed(1) + '" y="' + (l.y - 2).toFixed(1) + '" font-size="10.5" fill="var(--ink-2)">' + l.t + '</text><text x="' + (X(hz) + 8).toFixed(1) + '" y="' + (l.y + 11).toFixed(1) + '" font-size="11.5" font-family="var(--f-num)" fill="var(--ink)">' + Math.round(l.v).toLocaleString() + '円</text>'; });
+  }
+  const ticks = [xs, Math.round(xs / 2), 0, Math.round(hz / 2), hz].filter((v, i, a) => a.indexOf(v) === i);
+  ticks.forEach(k => { const d = dateAt(k); if (d) svg += '<text x="' + X(k).toFixed(1) + '" y="' + (H - 9) + '" text-anchor="middle" font-size="10.5" fill="var(--muted)" font-family="var(--f-num)">' + mdw(d) + '</text>'; });
+  svg += '<g class="xh" visibility="hidden"><line y1="' + m.t + '" y2="' + (H - m.b) + '" stroke="var(--ink-2)" stroke-width="1"/></g><rect class="hit" x="' + m.l + '" y="' + m.t + '" width="' + (W - m.l - m.r) + '" height="' + (H - m.t - m.b) + '" fill="transparent"/></svg>';
+  box.innerHTML = '<div class="lg"><span><i style="background:var(--ink)"></i>これまでの株価</span><span><i style="background:var(--accent)"></i>ふつう（真ん中）</span><span><i style="background:var(--accent);opacity:.45;height:10px"></i>濃い帯：半分がこの中 · 薄い帯：8割がこの中</span></div>' + svg;
+  const el = box.querySelector('svg'), xh = el.querySelector('.xh line');
+  el.querySelector('.hit').addEventListener('pointermove', e => {
+    const rc = el.getBoundingClientRect(), px = (e.clientX - rc.left) / rc.width * W;
+    const k = Math.max(xs, Math.min(xe, Math.round(xs + (px - m.l) / (W - m.l - m.r) * (xe - xs))));
+    xh.parentNode.setAttribute('visibility', 'visible'); xh.setAttribute('x1', X(k)); xh.setAttribute('x2', X(k));
+    const d = dateAt(k);
+    if (k <= 0) showTip('<div class="num">' + (d ? mdw(d) : '') + '</div><div class="num">終値 ' + yenP(hist[hist.length - 1 + k]) + '</div>', e.clientX, e.clientY);
+    else { const b = band.find(x => x[0] === k); if (b) showTip('<div class="num">' + mdw(d) + '（' + k + '営業日後）</div><div class="num">よかったとき ' + yenP(b[1][4]) + '</div><div class="num">ふつう ' + yenP(b[1][2]) + '</div><div class="num">悪かったとき ' + yenP(b[1][0]) + '</div>', e.clientX, e.clientY); }
+  });
+  el.querySelector('.hit').addEventListener('pointerleave', () => { xh.parentNode.setAttribute('visibility', 'hidden'); hideTip(); });
+}
+function renderAhToday() {
+  const ri = UA.rules.findIndex(r => r.name === AH.trule); if (ri < 0) return;
+  const r = UA.rules[ri];
+  const t100 = U.topix100 ? new Set(U.topix100.stocks.map(x => x.c)) : null;
+  const list = UA.stocks.filter(x => x.t && x.t.charAt(ri) === '1' && (AH.tscope === 'all' || (t100 && t100.has(x.c))))
+    .sort((a, b) => RELRANK.indexOf(a.v.charAt(ri)) - RELRANK.indexOf(b.v.charAt(ri)) || a.c.localeCompare(b.c));
+  $('ah-today-lead').innerHTML = mdw(UA.lastDate) + ' の引けで「' + esc(r.doc.plain) + '」の条件に当てはまった銘柄は <b>' + list.length.toLocaleString() + '</b> 銘柄（' + (AH.tscope === 'all' ? '全 ' + UA.nStocks.toLocaleString() : '主要100') + ' 銘柄中）。印はその銘柄でのこの買い方の過去の成績です。押すと上の予想に切り替わります。';
+  $('ah-tlist').innerHTML = list.length ? list.slice(0, AH.tshown).map(x => '<button type="button" class="trow" data-c="' + esc(x.c) + '"><span class="cd">' + esc(x.c) + '</span><span class="nm">' + esc(x.n) + '</span><span class="sub">' + relChip(x.v.charAt(ri)) + '<span>' + esc(x.s) + '</span>' + (x.p ? '<span class="num">' + yenP(x.p) + '</span>' : '') + '</span></button>').join('')
+    : '<div class="empty">今日この条件に当てはまった銘柄はありません。</div>';
+  $('ah-tmore').hidden = AH.tshown >= list.length;
+}
+$('ah-trule').addEventListener('change', e => { AH.trule = e.target.value; AH.tshown = 40; renderAhToday(); });
+$('ah-tscope').addEventListener('click', e => { const b = e.target.closest('button[data-s]'); if (!b) return; AH.tscope = b.dataset.s; $('ah-tscope').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.s === AH.tscope))); AH.tshown = 40; renderAhToday(); });
+$('ah-tmore').addEventListener('click', () => { AH.tshown += 40; renderAhToday(); });
+$('ah-tlist').addEventListener('click', e => {
+  const b = e.target.closest('.trow'); if (!b) return;
+  const ri = UA.rules.findIndex(r => r.name === AH.trule);
+  AH.code = b.dataset.c; AH.rule = AH.trule; renderAhead();
+  window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
 });
 
 /* ---------- market (全銘柄・TOPIX100) ---------- */
@@ -1510,7 +1868,7 @@ function renderMkRules() {
   let h = '<thead><tr><th>ルール</th><th>1回あたり平均<br>（市場全体）</th><th>同じ日の<br>他銘柄との差</th><th>補正後 p<br>平均 / 差</th><th>1日遅れで<br>入った場合の差</th><th>プラスの<br>銘柄</th><th>判定</th></tr></thead><tbody>';
   list.forEach(r => {
     const open = MK.open === r.name;
-    h += '<tr class="rrow' + (open ? ' open' : '') + '" data-name="' + esc(r.name) + '" tabindex="0" aria-expanded="' + open + '"><td>' + hl(r.name) + '<span class="fm">' + esc(r.family) + ' · ' + r.days.toLocaleString() + '日に点灯</span></td>' +
+    h += '<tr class="rrow' + (open ? ' open' : '') + '" data-name="' + esc(r.name) + '" tabindex="0" aria-expanded="' + open + '"><td>' + hl(r.doc.plain || r.name) + '<span class="fm">' + esc(r.name) + ' · ' + r.days.toLocaleString() + '日に点灯</span></td>' +
       '<td><span class="pill" style="background:' + cellBg(r.mean) + '">' + sg(r.mean) + '</span></td>' +
       '<td>' + (isNum(r.ex) ? '<span class="pill" style="background:' + cellBg(r.ex) + '">' + sg(r.ex) + '</span>' : '<span class="note">対照なし</span>') + '</td>' +
       '<td>' + pf(r.fdr) + ' / ' + (isNum(r.fdrE) ? pf(r.fdrE) : '—') + '</td>' +
@@ -1654,6 +2012,6 @@ fillSimSym(); setSim(SIM.key, HEAD);
 renderFilters(); renderDetail(); renderRules();
 applyRoute((location.hash || '').slice(1));
 let rt;
-addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (state.view === 'results') { const s = S[state.si]; renderEq(s, findRow(s, state.name)); } if (state.view === 'sim') renderSimOut(); if (state.view === 'market') { const u = U[MK.u]; const r = u && u.rules.find(x => x.name === MK.open); if (r) drawMkCurve(r); } }, 150); });
+addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (state.view === 'results') { const s = S[state.si]; renderEq(s, findRow(s, state.name)); } if (state.view === 'sim') renderSimOut(); if (state.view === 'ahead' && AH.fw) renderAhResult(); if (state.view === 'market') { const u = U[MK.u]; const r = u && u.rules.find(x => x.name === MK.open); if (r) drawMkCurve(r); } }, 150); });
 })();
 </script>

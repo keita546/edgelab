@@ -62,13 +62,14 @@ def _fwd(d: pd.DataFrame, basis: str, h: int) -> pd.Series:
 def _mk(name: str, family: str, d: pd.DataFrame, mask: pd.Series, sign: int,
         basis: str, h: int, note: str = "") -> Candidate | None:
     f = _fwd(d, basis, h)
-    mask = mask.fillna(False).astype(bool) & f.notna()
+    raw_mask = mask.fillna(False).astype(bool)          # 今日を含む生の条件(予想画面で使う)
+    mask = raw_mask & f.notna()
     if mask.sum() < 20:
         return None
     rets = (sign * f[mask]).dropna()
     ctrl = (sign * f[~mask & f.notna()]).dropna()
     return Candidate(name, family, rets, ctrl if len(ctrl) >= 20 else None, h, note,
-                     {"basis": basis, "sign": sign})
+                     {"basis": basis, "sign": sign, "mask": raw_mask})
 
 
 def daily_hypotheses(d: pd.DataFrame) -> list[Candidate]:
