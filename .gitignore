@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+cache/
+out/
+site/dashboard.html
+.DS_Store

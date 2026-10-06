@@ -1,0 +1,1278 @@
+<title>エッジ検定ボード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: 上部固定の画面切替(結果/シミュレーター/ルール辞典/説明書)。結果はファネル→色マップ→銘柄詳細、シミュレーターは左に条件・右に資産推移 */
+:root{
+  --bg:#f4f5f3; --surface:#fcfcfb; --ink:#121513; --ink-2:#4d5550; --muted:#727a75;
+  --line:#e0e3df; --axis:#c2c7c1; --accent:#2b4a8c; --accent-soft:#e6ebf5;
+  --pos:#d6453f; --neg:#2a78d6; --mid:#eceeea;
+  --good:#0ca30c; --good-ink:#0a6e0a; --warn:#fab219; --warn-ink:#8a5a00;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1110; --surface:#161a18; --ink:#eef1ee; --ink-2:#b6bdb8; --muted:#8d948f;
+  --line:#272c29; --axis:#3a403c; --accent:#93aef0; --accent-soft:#1d2638;
+  --pos:#e66767; --neg:#3987e5; --mid:#252a27;
+  --good:#0ca30c; --good-ink:#4fd04f; --warn:#fab219; --warn-ink:#fac353; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1110; --surface:#161a18; --ink:#eef1ee; --ink-2:#b6bdb8; --muted:#8d948f;
+  --line:#272c29; --axis:#3a403c; --accent:#93aef0; --accent-soft:#1d2638;
+  --pos:#e66767; --neg:#3987e5; --mid:#252a27;
+  --good:#0ca30c; --good-ink:#4fd04f; --warn:#fab219; --warn-ink:#fac353; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:24px 64px}
+.view{display:grid;gap:44px}
+h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.3}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:900;letter-spacing:.01em}
+h2{font-size:21px;font-weight:700}
+h3{font-size:15px;font-weight:700}
+h4{font-size:14px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-num);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lead{color:var(--ink-2);max-width:62ch}
+.sec{display:grid;gap:16px}
+.sec-head{display:grid;gap:6px}
+.sec-head p{color:var(--ink-2);max-width:68ch}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{font-size:12px;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;min-width:0}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:500;text-decoration:none}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--axis)}
+.btn:hover{opacity:.88}
+code{font-family:var(--f-num);font-size:12px;background:var(--bg);border:1px solid var(--line);padding:1px 6px;border-radius:4px;overflow-wrap:anywhere}
+pre{margin:0;overflow-x:auto;background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-family:var(--f-num);font-size:12px;line-height:1.6}
+pre code{border:0;padding:0;background:none}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:color-mix(in oklab,var(--bg) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1180px;margin:0 auto;padding-inline:20px;display:flex;align-items:center;gap:18px;min-height:52px;flex-wrap:wrap}
+.brand{font-weight:900;font-size:15px;letter-spacing:.02em;white-space:nowrap}
+.brand small{font-family:var(--f-num);font-weight:400;font-size:11px;color:var(--muted);margin-left:8px}
+nav.views{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.views a{padding:6px 12px;border-radius:999px;text-decoration:none;color:var(--ink-2);font-size:13.5px;white-space:nowrap}
+nav.views a:hover{background:var(--surface)}
+nav.views a[aria-current="page"]{background:var(--ink);color:var(--bg)}
+
+/* hero funnel */
+.hero{display:grid;gap:18px}
+.funnel{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.fstep{padding:14px 16px;display:grid;gap:4px;border-left:1px solid var(--line);min-width:0}
+.fstep:first-child{border-left:0}
+.fstep .v{font-family:var(--f-num);font-size:30px;font-weight:600;line-height:1.1}
+.fstep .k{font-size:12px;color:var(--ink-2);line-height:1.45}
+.fstep .bar{height:4px;border-radius:2px;background:var(--line);margin-top:6px;overflow:hidden}
+.fstep .bar i{display:block;height:100%;background:var(--ink-2);border-radius:2px}
+.fstep.final .v{color:var(--good-ink)}
+.fstep.final .bar i{background:var(--good)}
+@media (max-width:760px){.funnel{grid-template-columns:repeat(2,minmax(0,1fr))}.fstep{border-left:0;border-top:1px solid var(--line)}.fstep:nth-child(-n+2){border-top:0}.fstep:nth-child(2n){border-left:1px solid var(--line)}.fstep.final{grid-column:1/-1;border-left:0}}
+.finding{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;padding:16px 18px;border-radius:var(--r);background:var(--accent-soft)}
+.finding .mark{font-family:var(--f-num);font-weight:600;color:var(--accent);font-size:13px;padding-top:2px;white-space:nowrap}
+.finding p+p{margin-top:6px;color:var(--ink-2);font-size:13px}
+
+/* filter bar */
+.filters{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.search{position:relative;flex:1 1 260px;min-width:0}
+.search input{width:100%;font:inherit;font-size:14px;padding:8px 12px 8px 34px;border:1px solid var(--axis);border-radius:999px;background:var(--bg);color:var(--ink)}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px}
+.filters select{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--axis);border-radius:var(--r);background:var(--bg);color:var(--ink)}
+.fams{display:flex;flex-wrap:wrap;gap:6px}
+.fam{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 11px;font-size:12.5px;cursor:pointer}
+.fam[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:500}
+.fcount{font-size:12.5px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+.empty{padding:28px 16px;text-align:center;color:var(--ink-2);font-size:13px}
+mark{background:color-mix(in oklab,var(--warn) 45%,transparent);color:inherit;border-radius:2px;padding:0 1px}
+
+/* legend + heatmap */
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12px;color:var(--ink-2);align-items:center}
+.legend .ramp{display:inline-flex;align-items:center;gap:6px}
+.legend .ramp b{display:inline-block;width:120px;height:10px;border-radius:2px;background:linear-gradient(90deg,var(--neg),var(--mid),var(--pos))}
+.glyph{font-family:var(--f-num);font-weight:600}
+.scroller{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table.hm{border-collapse:separate;border-spacing:2px;width:100%;min-width:720px;font-size:12.5px}
+.hm th{font-weight:500;text-align:left;padding:6px 8px;color:var(--ink-2)}
+.hm thead th{background:var(--surface);font-size:12px;line-height:1.35;vertical-align:bottom}
+.hm thead th .tk{font-family:var(--f-num);color:var(--muted);font-size:11px;display:block}
+.hm th.rl{position:sticky;left:0;background:var(--surface);z-index:2;min-width:230px;max-width:280px;color:var(--ink);font-weight:400}
+.hm tr.grp th{padding-top:14px;font-size:11.5px;letter-spacing:.06em;color:var(--muted);font-family:var(--f-num)}
+.hm td{padding:0}
+.cell{display:flex;width:100%;min-width:74px;height:30px;align-items:center;justify-content:center;gap:5px;border:0;border-radius:3px;cursor:pointer;font-family:var(--f-num);font-size:12px;font-variant-numeric:tabular-nums;background:var(--mid)}
+.cell:hover{box-shadow:inset 0 0 0 2px var(--ink)}
+.cell.sel{box-shadow:inset 0 0 0 2px var(--accent),0 0 0 1px var(--accent)}
+.cell.na{cursor:default;color:var(--muted);background:transparent}
+
+/* ticker tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;display:inline-flex;gap:8px;align-items:baseline}
+.tab .tk{font-family:var(--f-num);font-size:11px;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab[aria-selected="true"] .tk{color:var(--bg);opacity:.7}
+.meta{font-size:12.5px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 18px}
+.mini-funnel{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;align-items:center;color:var(--ink-2)}
+.mini-funnel b{font-family:var(--f-num);color:var(--ink);font-weight:600;margin-left:4px}
+.mini-funnel .arr{color:var(--muted)}
+.detail{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.detail{grid-template-columns:minmax(0,1fr)}}
+
+/* forest */
+.fr{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) 54px;gap:10px;align-items:center;padding:3px 6px;border-radius:4px;border:0;background:transparent;text-align:left;cursor:pointer;width:100%}
+.fr:hover{background:var(--bg)}
+.fr.sel{background:var(--accent-soft)}
+.fr .nm{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+.fr .val{font-family:var(--f-num);font-size:11.5px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.strip{position:relative;height:18px}
+.strip .z{position:absolute;top:0;bottom:0;width:1px;background:var(--axis)}
+.strip .gl{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.strip .ci{position:absolute;top:8px;height:2px;border-radius:1px}
+.strip .pt{position:absolute;top:4px;width:10px;height:10px;border-radius:50%;transform:translateX(-5px);box-shadow:0 0 0 2px var(--surface)}
+.fr.sel .strip .pt{box-shadow:0 0 0 2px var(--accent-soft)}
+.f-axis{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) 54px;gap:10px;padding:0 6px 4px;font-family:var(--f-num);font-size:10.5px;color:var(--muted)}
+.f-axis .ticks{position:relative;height:16px}
+.f-axis .ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.fgrp{font-family:var(--f-num);font-size:11px;letter-spacing:.06em;color:var(--muted);padding:12px 6px 4px}
+@media (max-width:560px){.fr,.f-axis{grid-template-columns:minmax(0,1fr) 50px}.fr .nm{grid-column:1/-1}.f-axis>span:first-child{display:none}}
+
+/* chips, gates, stats */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:2px 10px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.chip.good{border-color:var(--good);color:var(--good-ink)}
+.chip.warn{border-color:var(--warn);color:var(--warn-ink)}
+.chip.neg{border-color:var(--neg);color:var(--neg)}
+.chip.mute{color:var(--muted)}
+.gates{display:grid;border-top:1px solid var(--line)}
+.gate{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.gate .ic{font-family:var(--f-num);font-weight:600;text-align:center}
+.gate.ok .ic{color:var(--good-ink)}
+.gate.ng .ic,.gate.na .ic{color:var(--muted)}
+.gate .gv{font-family:var(--f-num);font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.gate .gd{display:block;font-size:11.5px;color:var(--muted);line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px}
+.stat .k{font-size:11.5px;color:var(--muted)}
+.stat .v{font-family:var(--f-num);font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+@media (max-width:420px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.chart{position:relative;display:grid;gap:6px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.lg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--ink-2)}
+.lg i{display:inline-block;width:18px;height:2px;vertical-align:middle;margin-right:6px}
+.tip{position:fixed;pointer-events:none;z-index:30;background:var(--ink);color:var(--bg);font-size:12px;line-height:1.5;padding:8px 10px;border-radius:5px;max-width:300px;box-shadow:0 4px 18px rgba(0,0,0,.18)}
+
+/* calibration */
+.calib{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:760px){.calib{grid-template-columns:minmax(0,1fr)}}
+.cbar{display:grid;grid-template-columns:72px minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:12.5px}
+.cbar .track{position:relative;height:16px;background:var(--bg);border-radius:3px}
+.cbar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.cbar .ref{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.cbar .v{font-family:var(--f-num);text-align:right}
+
+/* simulator */
+.simgrid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.simgrid{grid-template-columns:minmax(0,1fr)}}
+.simform{position:sticky;top:calc(env(safe-area-inset-top,0px) + 64px)}
+@media (max-width:900px){.simform{position:static}}
+.field{display:grid;gap:4px}
+.field label,.field .lab{font-size:12px;color:var(--ink-2);font-weight:500}
+.field input[type=number],.field select{width:100%;font:inherit;font-size:13.5px;padding:7px 10px;border:1px solid var(--axis);border-radius:var(--r);background:var(--bg);color:var(--ink);font-variant-numeric:tabular-nums}
+.field .row{display:flex;gap:8px;align-items:center}
+.field input[type=range]{flex:1;accent-color:var(--accent)}
+.field .row input[type=number]{width:84px}
+.seg{display:flex;border:1px solid var(--axis);border-radius:var(--r);overflow:hidden}
+.seg label{flex:1;text-align:center;padding:6px 8px;font-size:13px;cursor:pointer;color:var(--ink-2)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--ink);color:var(--bg)}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.check input{margin-top:4px;accent-color:var(--accent)}
+.check small{display:block;color:var(--muted);font-size:11.5px;line-height:1.5}
+.headline{font-size:16px;line-height:1.8;max-width:70ch}
+.headline b{font-family:var(--f-num);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.kpi{padding:12px 14px;border-left:1px solid var(--line);border-top:1px solid var(--line);display:grid;gap:2px;min-width:0}
+.kpi:nth-child(3n+1){border-left:0}
+.kpi:nth-child(-n+3){border-top:0}
+.kpi .k{font-size:11.5px;color:var(--muted)}
+.kpi .v{font-family:var(--f-num);font-size:20px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
+.kpi .s{font-size:11.5px;color:var(--ink-2)}
+@media (max-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi{border-left:1px solid var(--line)!important;border-top:1px solid var(--line)!important}.kpi:nth-child(2n+1){border-left:0!important}.kpi:nth-child(-n+2){border-top:0!important}}
+.warnbox{border:1px solid var(--warn);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--ink)}
+.warnbox b{color:var(--warn-ink)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:760px){.two{grid-template-columns:minmax(0,1fr)}}
+.tbl{overflow-x:auto}
+table.list{border-collapse:collapse;width:100%;font-size:12.5px;min-width:560px}
+.list th{font-weight:500;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.list td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.list th:first-child,.list td:first-child,.list th:nth-child(2),.list td:nth-child(2){text-align:left}
+.up{color:var(--pos)} .dn{color:var(--neg)}
+
+/* rules dictionary */
+.rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:820px){.rules{grid-template-columns:minmax(0,1fr)}}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px;min-width:0;align-content:start}
+.rule .hd{display:flex;gap:8px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.rule .fm{font-size:11.5px;color:var(--muted);font-family:var(--f-num)}
+.rule dl{margin:0;display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 10px;font-size:13px}
+.rule dt{color:var(--muted);font-size:12px;padding-top:1px}
+.rule dd{margin:0}
+.tk-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px}
+.tk-cell{border-radius:3px;padding:3px 4px;text-align:center;font-size:11px;line-height:1.3;background:var(--mid);border:0;cursor:pointer}
+.tk-cell span{display:block;font-family:var(--f-num);font-size:11.5px}
+.tk-cell.na{background:transparent;color:var(--muted);cursor:default}
+.rule .acts{display:flex;gap:8px;flex-wrap:wrap}
+
+/* manual */
+.manual{display:grid;grid-template-columns:220px minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:900px){.manual{grid-template-columns:minmax(0,1fr)}}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 68px);display:grid;gap:2px;font-size:13px}
+@media (max-width:900px){.toc{position:static;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px}}
+.toc a{color:var(--ink-2);text-decoration:none;padding:3px 8px;border-radius:4px;display:block}
+.toc a:hover{background:var(--surface);color:var(--ink)}
+.toc .eyebrow{padding:0 8px 6px}
+.doc{display:grid;gap:36px;max-width:74ch;min-width:0}
+.doc section{display:grid;gap:12px;scroll-margin-top:80px}
+.doc p,.doc li{color:var(--ink-2)}
+.doc p strong,.doc li strong{color:var(--ink)}
+.doc ul,.doc ol{margin:0;padding-left:1.3em;display:grid;gap:6px}
+.doc dl{margin:0;display:grid;gap:12px}
+.doc dt{font-weight:700}
+.doc dd{margin:2px 0 0;color:var(--ink-2)}
+.doc .gate-doc{border-left:3px solid var(--line);padding-left:14px;display:grid;gap:4px}
+.doc .gate-doc h4 .n{font-family:var(--f-num);color:var(--muted);margin-right:6px}
+.doc table{border-collapse:collapse;width:100%;font-size:13px}
+.doc td,.doc th{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+.doc th{font-weight:500;color:var(--muted);font-size:12px}
+footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;display:grid;gap:6px;margin-top:44px}
+@media (prefers-reduced-motion:no-preference){.fr,.cell,.tab,.fam{transition:background-color .12s,box-shadow .12s}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">エッジ検定ボード<small id="gen-s"></small></div>
+    <nav class="views" aria-label="画面">
+      <a href="#results" data-v="results">結果</a>
+      <a href="#sim" data-v="sim">シミュレーター</a>
+      <a href="#rules" data-v="rules">ルール辞典</a>
+      <a href="#manual" data-v="manual">説明書</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+<!-- ===================== 結果 ===================== -->
+<main class="view" id="v-results">
+  <header class="hero">
+    <div class="eyebrow" id="gen"></div>
+    <h1>どの売買ルールが<br>統計の関門を越えたか</h1>
+    <p class="lead" id="lead"></p>
+    <div class="funnel" id="funnel"></div>
+    <div class="finding" id="finding"></div>
+  </header>
+
+  <section class="sec" aria-labelledby="h-map">
+    <div class="sec-head">
+      <h2 id="h-map">銘柄 × ルール</h2>
+      <p>セルの数字はコスト控除後の1回あたり平均損益（bps、1bps = 0.01%）。色が濃いほど大きい。セルを押すと下の詳細に切り替わります。</p>
+    </div>
+    <div class="filters" data-filter="results"></div>
+    <div class="legend">
+      <span class="ramp">マイナス <b></b> プラス</span>
+      <span>（国内の株価表示にならい、上昇を赤・下落を青）</span>
+      <span><span class="glyph" style="color:var(--good-ink)">◎</span> 全関門通過</span>
+      <span><span class="glyph" style="color:var(--warn-ink)">○</span> 多重検定は通過、最終関門で脱落</span>
+    </div>
+    <div class="scroller"><table class="hm" id="hm"></table></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-det" id="detail-sec">
+    <div class="sec-head"><h2 id="h-det">銘柄ごとの検定</h2></div>
+    <div class="tabs" role="tablist" aria-label="銘柄" id="tabs"></div>
+    <div class="meta" id="meta"></div>
+    <div class="mini-funnel" id="mfun"></div>
+    <div class="detail">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+          <h3>平均損益と95%信頼区間</h3>
+          <span class="note">線がゼロをまたぐ = 偶然と区別できない</span>
+        </div>
+        <div id="forest"></div>
+      </div>
+      <div class="panel" id="sel"></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-cal">
+    <div class="sec-head">
+      <h2 id="h-cal">このツール自体は信用できるか</h2>
+      <p>値動きにまったく法則のない乱数データ（ランダムウォーク）を24本作り、同じルールを全部当てました。正しく作られた検定なら「有望」は0件、偶然 p&lt;0.05 になる割合は理論どおり約5%に収まるはずです。</p>
+    </div>
+    <div class="calib" id="calib"></div>
+    <p class="note" style="max-width:72ch">修正前は「窓を寄り付きで仕掛けて引けで返す」系のルールが、売買シグナルと損益計算の両方に同じ寄り値を使っていました。寄り値が偶然安くつくだけで「下に窓を開けた」と「寄りから上がった」が同時に成立するため、法則のない乱数データでも強い優位性が出ていました。シグナルと建値の間に必ず別の価格を挟むよう全ルールを直してあります。</p>
+  </section>
+</main>
+
+<!-- ===================== シミュレーター ===================== -->
+<main class="view" id="v-sim" hidden>
+  <div class="sec-head">
+    <div class="eyebrow">資金シミュレーション</div>
+    <h1>そのルールで実際に<br>売買していたら</h1>
+    <p class="lead">ルールが出した売買を1回ずつ、資金と100株単位の制約つきで再現します。条件を変えるとすぐ計算し直します。</p>
+  </div>
+  <div class="simgrid">
+    <form class="panel simform" id="simf" autocomplete="off">
+      <div class="field"><label for="sim-sym">銘柄</label><select id="sim-sym"></select></div>
+      <div class="field"><label for="sim-rule">ルール</label><select id="sim-rule"></select><span class="note" id="sim-rule-doc"></span></div>
+      <div class="field"><label for="sim-cap">初期資金（円）</label><input type="number" id="sim-cap" min="10000" step="100000" value="3000000"></div>
+      <div class="field"><label for="sim-frac">1回に使う割合（%）</label>
+        <div class="row"><input type="range" id="sim-frac-r" min="5" max="100" step="5" value="50" aria-label="1回に使う割合（スライダー）"><input type="number" id="sim-frac" min="1" max="100" step="1" value="50"></div>
+        <span class="note">保有中に次のシグナルが出ると、残りの現金で入ります</span></div>
+      <div class="field"><label for="sim-cost">往復コスト（bps）</label><input type="number" id="sim-cost" min="0" max="200" step="1" value="10"><span class="note">10 = 0.10%。手数料＋売買の値幅のずれ</span></div>
+      <div class="field"><span class="lab" id="lab-comp">資金の増やし方</span>
+        <div class="seg" role="radiogroup" aria-labelledby="lab-comp">
+          <label><input type="radio" name="comp" id="sim-comp-c" value="c" checked>複利</label>
+          <label><input type="radio" name="comp" id="sim-comp-s" value="s">単利</label>
+        </div></div>
+      <label class="check"><input type="checkbox" id="sim-lot" checked><span>100株単位で買う<small>日本株の売買単位。資金が1単元に届かない回は見送り</small></span></label>
+      <div class="field"><span class="lab">期間</span>
+        <div class="row"><select id="sim-y0" aria-label="開始年"></select><span>〜</span><select id="sim-y1" aria-label="終了年"></select></div></div>
+      <label class="check"><input type="checkbox" id="sim-log"><span>資産推移を対数目盛で表示<small>何倍になったかを比べやすくなります</small></span></label>
+    </form>
+
+    <div style="display:grid;gap:18px;min-width:0">
+      <p class="headline" id="sim-head"></p>
+      <div id="sim-warn"></div>
+      <div class="kpis" id="sim-kpi"></div>
+      <div class="panel"><h3>資産の推移</h3><div class="chart" id="sim-eq"></div></div>
+      <div class="two">
+        <div class="panel"><h3>高値からの下落</h3><div class="chart" id="sim-dd"></div></div>
+        <div class="panel"><h3>年ごとの確定損益</h3><div class="chart" id="sim-yr"></div></div>
+      </div>
+      <div class="panel">
+        <h3>運が違っていたら（モンテカルロ 1,000回）</h3>
+        <p class="note">実際の勝ち負けの記録から、順番と組み合わせをランダムに引き直して1,000通りの結果を作りました。同じルールでも、どの程度ぶれるかの目安です。</p>
+        <div class="chart" id="sim-mc"></div>
+      </div>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline"><h3>取引履歴</h3><span class="note" id="sim-tcount"></span></div>
+        <div class="tbl"><table class="list" id="sim-trades"></table></div>
+        <div><button type="button" class="btn ghost" id="sim-more" hidden>さらに50件</button></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ===================== ルール辞典 ===================== -->
+<main class="view" id="v-rules" hidden>
+  <div class="sec-head">
+    <div class="eyebrow">ルール辞典</div>
+    <h1>検定した売買ルール</h1>
+    <p class="lead">各ルールがどんな条件で、いつ入って、いつ出るか。下の色付きの枠は銘柄ごとの結果で、押すとその銘柄の詳細を開きます。</p>
+  </div>
+  <div class="filters" data-filter="rules"></div>
+  <div class="rules" id="rules"></div>
+</main>
+
+<!-- ===================== 説明書 ===================== -->
+<main class="view" id="v-manual" hidden>
+  <div class="sec-head">
+    <div class="eyebrow">説明書</div>
+    <h1>エッジ検定ボードの使い方</h1>
+    <p class="lead">このボードは「過去のデータで、ある売買ルールに偶然では説明しにくい優位性があったか」を調べる道具です。画面の読み方、統計用語、シミュレーターの前提、データの更新方法をまとめました。</p>
+  </div>
+  <div class="manual">
+    <nav class="toc" aria-label="目次">
+      <div class="eyebrow">目次</div>
+      <a href="#manual-about">1. わかること・わからないこと</a>
+      <a href="#manual-screens">2. 画面の構成</a>
+      <a href="#manual-results">3. 結果画面の読み方</a>
+      <a href="#manual-gates">4. 6つの関門</a>
+      <a href="#manual-verdicts">5. 判定ラベル</a>
+      <a href="#manual-sim">6. シミュレーター</a>
+      <a href="#manual-search">7. 検索と絞り込み</a>
+      <a href="#manual-update">8. データの更新</a>
+      <a href="#manual-addrule">9. ルールを追加する</a>
+      <a href="#manual-glossary">10. 用語集</a>
+      <a href="#manual-limits">11. 限界と注意</a>
+    </nav>
+    <div class="doc">
+      <section id="m-about">
+        <h2>1. わかること・わからないこと</h2>
+        <p><strong>わかること</strong>：過去15年（日経平均は25年）の株価で、あるルールどおりに売買していたら、手数料を引いたあとも平均してプラスだったか。そしてそのプラスが「たくさん試したうちの偶然の当たり」で説明できてしまわないか。</p>
+        <p><strong>わからないこと</strong>：そのルールがこれからも効くか。過去に効いていた規則性は、知られるほど、また相場の参加者が変わるほど消えていきます。ここでの結果は「調べる価値がある候補」を絞るためのもので、売買の推奨ではありません。</p>
+        <p>多くの「勝てる手法」は、何十通りも試した中から結果の良いものだけを選んだ結果です。40通り試せば、まったく意味のないルールでも平均2つは「統計的に有意」に見えます。このボードは、その見かけの当たりを落とすことに重点を置いています。</p>
+      </section>
+
+      <section id="m-screens">
+        <h2>2. 画面の構成</h2>
+        <table>
+          <tr><th>画面</th><th>できること</th></tr>
+          <tr><td><a href="#results">結果</a></td><td>全ルールの生き残り数、銘柄×ルールの色マップ、銘柄ごとの信頼区間と関門の合否、損益曲線</td></tr>
+          <tr><td><a href="#sim">シミュレーター</a></td><td>初期資金・投入割合・コストなどを決めて、ルールどおりに売買した場合の資産推移を再現</td></tr>
+          <tr><td><a href="#rules">ルール辞典</a></td><td>各ルールの条件・入り・出口・狙いの説明と、銘柄ごとの結果の一覧。検索できます</td></tr>
+          <tr><td><a href="#manual">説明書</a></td><td>このページ</td></tr>
+        </table>
+      </section>
+
+      <section id="m-results">
+        <h2>3. 結果画面の読み方</h2>
+        <h3>ファネル（一番上の5つの数字）</h3>
+        <p>左から「検定したルールの総数 → コスト控除後に平均プラス → 単独で見て有意 → 多重検定の補正後も有意 → 全関門を通過」。右へ行くほど厳しい条件で、数字が減っていく様子そのものが結論です。</p>
+        <h3>銘柄 × ルールの色マップ</h3>
+        <p>縦がルール、横が銘柄です。セルの数字はコストを引いたあとの1回あたり平均損益（bps）。国内の株価表示にならってプラスを赤、マイナスを青で塗り、色が濃いほど絶対値が大きくなります。<span class="glyph" style="color:var(--good-ink)">◎</span>は全関門通過、<span class="glyph" style="color:var(--warn-ink)">○</span>は多重検定の補正は通ったが最後の関門で落ちたものです。セルの上にマウスを置くと詳細、押すと下の銘柄詳細に移ります。</p>
+        <h3>平均損益と95%信頼区間（左のパネル）</h3>
+        <p>点が平均、横線が「本当の平均はおそらくこの範囲」という95%信頼区間です。<strong>横線がゼロの縦線をまたいでいたら、プラスかマイナスかも言い切れない</strong>という意味です。行を押すと右のパネルが切り替わります。</p>
+        <h3>関門と損益曲線（右のパネル）</h3>
+        <p>選んだルールが6つの関門のどれを通ったか（✓/✗）と、その根拠の数値。下のグラフは1回ごとの損益（%）を単純に足し上げた累積で、灰色の線は同じ期間ただ持ち続けた場合、色付きの帯は後半30%の検証期間です。「このルールでシミュレーション」でシミュレーターに同じ条件で移れます。</p>
+      </section>
+
+      <section id="m-gates">
+        <h2>4. 6つの関門</h2>
+        <p>全部を通ったものだけが「全関門通過」になります。順番は、ゆるい関門から厳しい関門へ並べています。</p>
+        <div class="gate-doc"><h4><span class="n">1</span>コスト控除後の平均がプラス</h4>
+          <p>売買のたびに往復コスト（個別株0.10%、日経平均0.05%）を差し引いても、1回あたりの平均損益がプラスか。どれほど統計的に確かでも、1回の利益がコストより小さければ実際には負けます。</p></div>
+        <div class="gate-doc"><h4><span class="n">2</span>単独で見て有意（p &lt; 0.05）</h4>
+          <p>平均がたまたまプラスになっただけではないか。保有期間が重なるルール（5日保有など）は普通の t 検定だと有意に出すぎるので、重なりを補正する Newey-West の方法で計算しています。</p></div>
+        <div class="gate-doc"><h4><span class="n">3</span>多重検定の補正後も有意（FDR補正 p &lt; 0.05）</h4>
+          <p>何十通りも試したという事実を織り込みます。試す数が増えるほど偶然の当たりも増えるので、その分だけ p 値を厳しくします（Benjamini–Hochberg 法）。<strong>ほとんどの「勝てそうなルール」はここで消えます</strong>。</p></div>
+        <div class="gate-doc"><h4><span class="n">4</span>シグナルが出ない日より良い</h4>
+          <p>そのルールが入った日の成績と、入らなかった日に同じ向きで持った成績の差を比べます（Welch の t 検定）。上昇相場ではどんな「買い」ルールも儲かって見えるので、それを除くための比較です。毎日入るルールには比較相手がないので「対照なし」になります。</p></div>
+        <div class="gate-doc"><h4><span class="n">5</span>後半の検証期間でも同じ向き</h4>
+          <p>データを時間で前半70%と後半30%に分け、前半で見えたプラスが後半でもプラスだったか。前半だけに当てはまる「過去への当てはめすぎ」を見つけます。</p></div>
+        <div class="gate-doc"><h4><span class="n">6</span>試行回数で割り引いても残る（DSR &gt; 0.95）</h4>
+          <p>Deflated Sharpe Ratio。試したルールの数、損益分布のゆがみ（大負けが混じるか）、取引回数から「このルールの本当の実力がゼロより大きい確率」を出します。0.95 を超えれば合格。最も厳しい関門です。</p></div>
+      </section>
+
+      <section id="m-verdicts">
+        <h2>5. 判定ラベル</h2>
+        <table>
+          <tr><th style="width:40%">ラベル</th><th>意味</th></tr>
+          <tr><td><span class="chip good"><span class="glyph">◎</span>全関門通過</span></td><td>6つすべて合格。それでも別の期間・別の銘柄での確認が必要な「候補」です</td></tr>
+          <tr><td><span class="chip warn"><span class="glyph">○</span>FDR通過・DSR不足</span></td><td>多重検定は越えたが、試行回数で割り引くと確率が0.95に届かない</td></tr>
+          <tr><td><span class="chip warn"><span class="glyph">○</span>IS/OOS不一致</span></td><td>前半はプラスだったが後半の検証期間でマイナスになった。当てはめすぎの疑い</td></tr>
+          <tr><td><span class="chip mute">多重検定で消滅</span></td><td>単独では p&lt;0.05 だったが、試した数を考えると偶然で説明できる</td></tr>
+          <tr><td><span class="chip mute">優位性なし</span></td><td>単独でも有意でない</td></tr>
+          <tr><td><span class="chip neg"><span class="glyph">▼</span>有意にマイナス</span></td><td>補正後も確かに損をしている。逆向きに売買すれば良いとは限りません（逆向きでもコストは同じだけかかるため）</td></tr>
+        </table>
+      </section>
+
+      <section id="m-sim">
+        <h2>6. シミュレーター</h2>
+        <h3>使い方</h3>
+        <ol>
+          <li>銘柄とルールを選びます。ルール辞典や結果画面の「このルールでシミュレーション」からも移れます。</li>
+          <li>初期資金、1回に使う割合、往復コスト、複利か単利か、100株単位にするか、期間を決めます。変えるとすぐ計算し直します。</li>
+          <li>最初の一文に「最終的にいくらになったか」と「同じ期間ただ持ち続けたらいくらか」が出ます。<strong>まずこの2つを比べてください</strong>。統計的に有意なルールでも、持ち続けた方がはるかに増えることはよくあります。ルールは相場にいる時間が短いからです。</li>
+        </ol>
+        <h3>計算の前提</h3>
+        <ul>
+          <li>ルールの売買を古い順に1回ずつ処理します。同じ日に決済と新規がある場合は、決済を先にします。</li>
+          <li>1回の投入額は「基準額 × 使う割合」。基準額は、複利なら「現金＋保有中の取得額」、単利なら常に初期資金です。</li>
+          <li>現金が足りないときは手持ちの現金まで。100株単位がオンなら株数を100株単位で切り捨て、1単元に届かなければその回は見送ります（見送り回数は警告に出ます）。</li>
+          <li>1回の損益は「投入額 ×（その回の値動き − 往復コスト）」。値動きは配当込みです。</li>
+          <li>資産は決済のたびに更新します。保有中の含み損は反映しないので、<strong>実際の途中の落ち込みはグラフより大きいことがあります</strong>。</li>
+          <li>空売りのルールも同じ計算をします。実際には信用取引の担保・貸株料・空売り規制がかかりますが、ここでは考慮していません。</li>
+          <li>税金（約20%）は引いていません。</li>
+          <li>100株単位の必要資金は株式分割を調整した株価で計算しています。分割前の実際の株価はもっと高かったため、<strong>過去の期間ほど必要資金が小さく出ます</strong>（例：ソニーは2024年に1株を5株に分割）。</li>
+        </ul>
+        <h3>モンテカルロ</h3>
+        <p>実際に行われた取引の損益率から、無作為に引き直して同じ回数だけ並べ、複利で積み上げる試行を1,000回行います。下位5%・中央値・上位5%と、初期資金を割り込んだ割合を表示します。並び順の運でどれだけ結果が変わるかの目安で、保有期間の重なりや100株単位は考慮していない簡略計算です。</p>
+      </section>
+
+      <section id="m-search">
+        <h2>7. 検索と絞り込み</h2>
+        <p>結果画面とルール辞典の上にある検索欄は、ルール名だけでなく、条件・入り・出口・狙いの説明文も対象にします。両方の画面で同じ検索条件が使われます。</p>
+        <ul>
+          <li>空白で区切ると、すべての語を含むものに絞り込みます。例：<code>RSI 5日</code>、<code>窓 売り</code>、<code>引け 翌営業日</code></li>
+          <li>全角・半角や大文字・小文字の違いは無視します（<code>ｒｓｉ</code> でも <code>RSI</code> でも同じ）。</li>
+          <li>「判定」で全関門通過や惜しいものだけに絞れます。どれか1銘柄でも当てはまればそのルールを表示します。</li>
+          <li>分類のボタン（曜日・モメンタム・逆張りなど）は複数選べます。</li>
+          <li>キーボードの <code>/</code> で検索欄に移ります。<code>Esc</code> で検索語を消します。</li>
+        </ul>
+      </section>
+
+      <section id="m-update">
+        <h2>8. データの更新</h2>
+        <p>このページは作成時点の結果を表示するだけで、ページ自体が株価を取りに行くことはありません。最新のデータで作り直すには、Mac のターミナルで次を実行します。</p>
+        <pre><code>cd ~/Documents/GitHub/edgelab
+.venv/bin/python export.py          # 既定の6銘柄を取得・検定（数分）
+.venv/bin/python build_site.py      # site/dashboard.html を作り直す</code></pre>
+        <p>銘柄を変えるときは、コードを並べて指定します。日本株は末尾に <code>.T</code>、指数は <code>^N225</code>、米国株は <code>AAPL</code> のように書きます。</p>
+        <pre><code>.venv/bin/python export.py 7203.T 6758.T 4063.T ^N225</code></pre>
+        <p>そのほかのコマンド：</p>
+        <table>
+          <tr><th>コマンド</th><th>用途</th></tr>
+          <tr><td><code>run.py --symbol 7203.T</code></td><td>1銘柄の検定結果を表で表示し、CSV に保存</td></tr>
+          <tr><td><code>sim.py 6758.T "RSI2&lt;10→5日"</code></td><td>シミュレーターと同じ計算をターミナルで行う</td></tr>
+          <tr><td><code>selftest.py</code></td><td>乱数データで偽の「有望」を出さないか確認する（約3分）</td></tr>
+        </table>
+        <p>5分足は無料データの制約で直近約60日しか取れません。日足は1日に1回、5分足は1時間に1回までキャッシュを使い、それより古ければ取り直します。</p>
+      </section>
+
+      <section id="m-addrule">
+        <h2>9. ルールを追加する</h2>
+        <p>自分のアイデアを検定するには、<code>edgelab/hypotheses.py</code> の <code>daily_hypotheses</code> に1行足します。たとえば「5日移動平均を上抜けた日の引けで買い、3日持つ」なら：</p>
+        <pre><code>ma5 = d["close"].rolling(5).mean()
+cross = (d["close"] &gt; ma5) &amp; (d["close"].shift(1) &lt;= ma5.shift(1))
+add(_mk("順張り:5日線上抜け→3日保有", "モメンタム", d, cross, +1, "c2c", 3))</code></pre>
+        <p><code>_mk</code> の引数は「ルール名、分類、データ、条件（True の日に入る）、向き（+1 買い / −1 売り）、損益の測り方、保有日数」です。損益の測り方は <code>c2c</code>（引けで入り、保有日数後の引けで出る）、<code>o2c</code>（寄りで入り同日引けで出る）、<code>c2o</code>（引けで入り翌日寄りで出る）の3つ。</p>
+        <p>説明文をルール辞典に出すには <code>edgelab/rules_doc.py</code> に同じ名前の説明を足し、データの更新と同じ2つのコマンドを実行します。</p>
+        <p><strong>注意</strong>：条件には、入る時点で分かっている情報だけを使ってください。翌日の値を使うと結果が実際より良く見えます。また、シグナルと建値に同じ価格を使わないこと（結果画面の「このツール自体は信用できるか」を参照）。ルールを足すと試した数が増えるので、ほかのルールの補正後の p 値も少し厳しくなります。</p>
+      </section>
+
+      <section id="m-glossary">
+        <h2>10. 用語集</h2>
+        <dl>
+          <dt>bps（ベーシスポイント）</dt><dd>0.01% のこと。10bps = 0.10%、100bps = 1%。</dd>
+          <dt>往復コスト</dt><dd>買いと売りの1往復でかかる費用。手数料に加え、気配値の差（スプレッド）や思った値段で約定しないずれを含めた見積もり。</dd>
+          <dt>寄り付き・引け・ザラ場・オーバーナイト</dt><dd>寄り付きはその日最初の取引、引けは最後の取引。ザラ場は取引時間中、オーバーナイトは引けから翌日の寄り付きまでの取引時間外。</dd>
+          <dt>窓（ギャップ）</dt><dd>寄り付きの値段が前日の終値から飛んで始まること。安く始まれば「下に窓を開けた」。</dd>
+          <dt>RSI(2)</dt><dd>直近2日の上げ幅と下げ幅の比率から作る0〜100の指標。10未満は2日で急に売られた状態、90超は急に買われた状態。</dd>
+          <dt>ボラティリティ</dt><dd>値動きの大きさ。ここでは直近20日の日々の騰落率のばらつき（標準偏差）。</dd>
+          <dt>p 値</dt><dd>本当は優位性がゼロなのに、偶然でこれだけの結果が出る確率。0.05 未満なら「偶然とは考えにくい」とするのが慣例。</dd>
+          <dt>多重検定・FDR</dt><dd>たくさんの仮説を同時に試すと偶然の当たりが増える問題。FDR 補正は、合格としたものの中に偶然の当たりが混じる割合を5%以下に抑えるよう p 値を調整します。</dd>
+          <dt>DSR（Deflated Sharpe Ratio）</dt><dd>シャープレシオ（リスク1単位あたりの収益）が本当にプラスである確率を、試行回数・分布のゆがみ・標本数で割り引いたもの。</dd>
+          <dt>IS / OOS</dt><dd>In-Sample（ルールの良し悪しを見た前半の期間）と Out-of-Sample（検証用に取っておいた後半の期間）。</dd>
+          <dt>対照群</dt><dd>比較の基準になるグループ。ここではルールが入らなかった日。</dd>
+          <dt>95% 信頼区間</dt><dd>本当の平均がおそらく入っている範囲。データの順番の重なりを考慮したブートストラップ法で計算。</dd>
+          <dt>検出力</dt><dd>本当に5bpsの優位性があった場合に、それを有意と判定できる確率。低ければ「優位性なし」は「判断材料が足りない」という意味になります。</dd>
+          <dt>勝率・プロフィットファクター</dt><dd>勝率は利益が出た回の割合。プロフィットファクター（PF）は利益の合計 ÷ 損失の合計で、1を超えればトータルでプラス。</dd>
+          <dt>最大ドローダウン（最大下落）</dt><dd>資産が途中の最高値から最も大きく減った割合。</dd>
+          <dt>年率リターン（CAGR）</dt><dd>最終的な増え方を、毎年同じ率で増えたと仮定したときの1年あたりの率。</dd>
+          <dt>複利・単利</dt><dd>複利は増えた資金で次の投入額も増やす。単利は毎回初期資金を基準にする。</dd>
+          <dt>単元株（100株単位）</dt><dd>日本の株式は原則100株単位でしか売買できません。株価6,000円の銘柄なら1回に最低60万円が必要です。</dd>
+          <dt>モンテカルロ</dt><dd>乱数を使って多数の「ありえた結果」を作り、結果のぶれの幅を見る方法。</dd>
+        </dl>
+      </section>
+
+      <section id="m-limits">
+        <h2>11. 限界と注意</h2>
+        <ul>
+          <li>同じルールが複数銘柄で効いて見えても、独立した確認にはなりません。RSI(2)&lt;10 は相場全体が急落した日に一斉に点灯するため、同じ日の結果を何度も数えています。</li>
+          <li>5分足は直近約2か月しかなく、検出力が足りません。5分足の「優位性なし」は「判断できない」と読んでください。</li>
+          <li>自分の売買による値動きへの影響、空売りの制約・貸株料、税金は考慮していません。</li>
+          <li>現在上場している銘柄だけを調べているため、上場廃止になった銘柄の成績は含まれていません（生存者バイアス）。</li>
+          <li>データは Yahoo Finance の無料データで、誤りや欠損がありえます。</li>
+          <li>過去の統計の検定結果であり、将来の成績や特定の売買を勧めるものではありません。投資の判断はご自身の責任で行ってください。</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer id="foot"></footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function () {
+'use strict';
+const D = JSON.parse(document.getElementById('data').textContent);
+const S = D.symbols;
+const HEAD = '逆張り:RSI2<10→5日保有';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const isNum = v => typeof v === 'number' && isFinite(v);
+const f = (v, d) => isNum(v) ? v.toFixed(d === undefined ? 1 : d) : '—';
+const sg = (v, d) => isNum(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d === undefined ? 1 : d) : '—';
+const pf = v => isNum(v) ? (v < 0.001 ? '<0.001' : v.toFixed(3)) : '—';
+const isIntra = r => r.family === '分足';
+const posFdr = r => isNum(r.fdr) && r.fdr < 0.05 && r.mean > 0;
+const NEAR = ['FDR通過・DSR不足', 'IS/OOS不一致', 'FDR通過・OOS不足'];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const yen = v => Math.round(v).toLocaleString('ja-JP') + '円';
+function yenShort(v) {
+  const a = Math.abs(v), s = v < 0 ? '−' : '';
+  if (a >= 1e8) return s + (a / 1e8).toFixed(a >= 1e9 ? 0 : 1).replace(/\.0$/, '') + '億';
+  if (a >= 1e4) return s + Math.round(a / 1e4).toLocaleString('ja-JP') + '万';
+  return s + Math.round(a).toLocaleString('ja-JP');
+}
+
+function chip(v) {
+  if (v === '有望(要追試)') return '<span class="chip good"><span class="glyph">◎</span>全関門通過</span>';
+  if (NEAR.indexOf(v) >= 0) return '<span class="chip warn"><span class="glyph">○</span>' + esc(v) + '</span>';
+  if (v === '有意にマイナス') return '<span class="chip neg"><span class="glyph">▼</span>有意にマイナス</span>';
+  if (v === '補正で消滅') return '<span class="chip mute">多重検定で消滅</span>';
+  return '<span class="chip mute">' + esc(v) + '</span>';
+}
+const glyphOf = v => v === '有望(要追試)' ? ['◎', 'var(--good-ink)'] : NEAR.indexOf(v) >= 0 ? ['○', 'var(--warn-ink)'] : null;
+function counts(rows) {
+  return {
+    tests: rows.length,
+    plus: rows.filter(r => r.mean > 0).length,
+    raw: rows.filter(r => r.mean > 0 && isNum(r.p) && r.p < 0.05).length,
+    fdr: rows.filter(posFdr).length,
+    all: rows.filter(r => r.verdict === '有望(要追試)').length,
+  };
+}
+function cellBg(m) {
+  if (!isNum(m)) return 'var(--mid)';
+  const pct = Math.round(Math.min(Math.abs(m) / 60, 1) * 72);
+  return 'color-mix(in oklab, ' + (m >= 0 ? 'var(--pos)' : 'var(--neg)') + ' ' + pct + '%, var(--mid))';
+}
+function niceStep(span, n) {
+  const raw = span / (n || 5), p = Math.pow(10, Math.floor(Math.log10(raw)));
+  return [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw);
+}
+
+/* ---------- rule catalogue (union across tickers) ---------- */
+const rules = [];
+const ruleBy = new Map();
+S.forEach((s, si) => s.rows.forEach(r => {
+  if (!ruleBy.has(r.name)) { const o = { name: r.name, family: r.family, doc: r.doc, intra: isIntra(r), cells: [] }; ruleBy.set(r.name, o); rules.push(o); }
+  ruleBy.get(r.name).cells[si] = r;
+}));
+const ruleScore = n => {
+  const cs = n.cells.filter(Boolean);
+  return cs.filter(r => r.verdict === '有望(要追試)').length * 1000 + cs.filter(posFdr).length * 100 + cs.reduce((a, r) => a + (r.mean || 0), 0) / cs.length;
+};
+rules.sort((a, b) => ruleScore(b) - ruleScore(a));
+const FAMS = [];
+rules.forEach(r => { if (FAMS.indexOf(r.family) < 0) FAMS.push(r.family); });
+
+/* ---------- search & filter state ---------- */
+const norm = s => String(s).normalize('NFKC').toLowerCase().replace(/\s+/g, '');
+rules.forEach(r => { r.hay = norm([r.name, r.family, r.doc.cond, r.doc.entry, r.doc.exit, r.doc.idea, r.doc.side].join(' ')); });
+const F = { q: '', v: 'all', fams: [] };
+const VOPTS = [['all', 'すべての判定'], ['pass', '◎ 全関門通過'], ['near', '○ 補正は通過（惜しい）'], ['gone', '多重検定で消滅'], ['none', '優位性なし'], ['neg', '▼ 有意にマイナス']];
+function vclass(v) {
+  if (v === '有望(要追試)') return 'pass';
+  if (NEAR.indexOf(v) >= 0) return 'near';
+  if (v === '補正で消滅') return 'gone';
+  if (v === '有意にマイナス') return 'neg';
+  return 'none';
+}
+function nameOk(rule) {
+  if (F.fams.length && F.fams.indexOf(rule.family) < 0) return false;
+  const terms = F.q.split(/\s+/).map(norm).filter(Boolean);
+  return terms.every(t => rule.hay.indexOf(t) >= 0);
+}
+const rowOk = r => F.v === 'all' || vclass(r.verdict) === F.v;
+const ruleOk = rule => nameOk(rule) && (F.v === 'all' || rule.cells.some(c => c && rowOk(c)));
+function hl(text) {
+  const terms = F.q.split(/\s+/).filter(Boolean).map(t => t.normalize('NFKC'));
+  let out = esc(text);
+  terms.forEach(t => {
+    const et = esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (et) out = out.replace(new RegExp('(' + et + ')', 'gi'), '<mark>$1</mark>');
+  });
+  return out;
+}
+
+function renderFilters() {
+  document.querySelectorAll('[data-filter]').forEach(box => {
+    const k = box.dataset.filter;
+    if (!box.dataset.built) {
+      box.dataset.built = '1';
+      box.innerHTML =
+        '<div class="search"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="var(--muted)" stroke-width="1.6"/><path d="M11 11l3.5 3.5" stroke="var(--muted)" stroke-width="1.6" stroke-linecap="round"/></svg>' +
+        '<input type="search" id="q-' + k + '" placeholder="ルールを検索（例：RSI、窓、5日、売り）" aria-label="ルールを検索"></div>' +
+        '<select id="v-' + k + '" aria-label="判定で絞り込む">' + VOPTS.map(o => '<option value="' + o[0] + '">' + o[1] + '</option>').join('') + '</select>' +
+        '<div class="fams" role="group" aria-label="分類で絞り込む">' + FAMS.map(fm => '<button type="button" class="fam" data-fam="' + esc(fm) + '" aria-pressed="false">' + esc(fm) + '</button>').join('') + '</div>' +
+        '<span class="fcount" id="c-' + k + '"></span>';
+      box.querySelector('input').addEventListener('input', e => { F.q = e.target.value; onFilter(); });
+      box.querySelector('input').addEventListener('keydown', e => { if (e.key === 'Escape') { F.q = ''; onFilter(); } });
+      box.querySelector('select').addEventListener('change', e => { F.v = e.target.value; onFilter(); });
+      box.querySelector('.fams').addEventListener('click', e => {
+        const b = e.target.closest('.fam'); if (!b) return;
+        const fm = b.dataset.fam, i = F.fams.indexOf(fm);
+        if (i >= 0) F.fams.splice(i, 1); else F.fams.push(fm);
+        onFilter();
+      });
+    }
+    const inp = box.querySelector('input');
+    if (inp.value !== F.q) inp.value = F.q;
+    box.querySelector('select').value = F.v;
+    box.querySelectorAll('.fam').forEach(b => b.setAttribute('aria-pressed', String(F.fams.indexOf(b.dataset.fam) >= 0)));
+    const n = rules.filter(ruleOk).length;
+    $('c-' + k).textContent = rules.length + 'ルール中 ' + n + '件';
+  });
+}
+function onFilter() { renderFilters(); renderHM(); renderForest(); renderRules(); }
+addEventListener('keydown', e => {
+  if (e.key !== '/' || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  const v = state.view === 'rules' ? 'rules' : 'results';
+  if (state.view !== 'results' && state.view !== 'rules') return;
+  e.preventDefault(); $('q-' + v).focus();
+});
+
+/* ---------- state & router ---------- */
+const firstPass = S.findIndex(s => s.rows.some(r => r.verdict === '有望(要追試)'));
+const state = { view: 'results', si: Math.max(0, firstPass), name: HEAD };
+// アーティファクトの枠内では # リンクの移動が外側に取られるため、画面切替はスクリプトで行う
+function applyRoute(h) {
+  h = h || 'results';
+  const head = h.split('-')[0];
+  const view = ['results', 'sim', 'rules', 'manual'].indexOf(head) >= 0 ? head : 'results';
+  state.view = view;
+  ['results', 'sim', 'rules', 'manual'].forEach(v => { $('v-' + v).hidden = v !== view; });
+  document.querySelectorAll('nav.views a').forEach(a => { if (a.dataset.v === view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  if (view === 'sim') runSim();
+  if (view === 'results') { const s = S[state.si]; renderEq(s, findRow(s, state.name)); }
+  const sub = h.indexOf('-') > 0 ? $('m-' + h.split('-').slice(1).join('-')) : null;
+  if (sub) sub.scrollIntoView({ behavior: 'auto', block: 'start' });
+  else window.scrollTo(0, 0);
+}
+function go(h) {
+  applyRoute(h);
+  try { history.replaceState(null, '', '#' + h); } catch (err) { /* 枠によっては使えない */ }
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]'); if (!a) return;
+  e.preventDefault();
+  go(a.getAttribute('href').slice(1));
+});
+addEventListener('hashchange', () => applyRoute(location.hash.slice(1)));
+
+/* ---------- tooltip ---------- */
+const tip = $('tip');
+function showTip(html, x, y) {
+  tip.innerHTML = html; tip.hidden = false;
+  const w = tip.offsetWidth, hgt = tip.offsetHeight;
+  let L = x + 14, T = y + 14;
+  if (L + w > innerWidth - 8) L = x - w - 14;
+  if (T + hgt > innerHeight - 8) T = y - hgt - 14;
+  tip.style.left = Math.max(8, L) + 'px'; tip.style.top = Math.max(8, T) + 'px';
+}
+const hideTip = () => { tip.hidden = true; };
+function rowTip(s, r) {
+  return '<div><b>' + esc(r.name) + '</b></div><div class="num">' + esc(s.label) + '　' + r.n + '回</div>' +
+    '<div class="num">平均 ' + sg(r.mean) + 'bps　95%CI ' + sg(r.lo, 0) + '〜' + sg(r.hi, 0) + '</div>' +
+    '<div class="num">勝率 ' + f(r.win) + '%　FDR補正p ' + pf(r.fdr) + '　DSR ' + f(r.dsr, 2) + '</div><div>' + esc(r.verdict) + '</div>';
+}
+const findRow = (s, name) => s.rows.find(x => x.name === name) || s.rows[0];
+
+/* ---------- hero ---------- */
+const allRows = S.reduce((a, s) => a.concat(s.rows), []);
+const C = counts(allRows);
+$('gen').textContent = '統計的優位性スキャン · ' + D.generated + ' 時点のデータ';
+$('gen-s').textContent = D.generated.slice(0, 10);
+$('lead').textContent = S.length + '銘柄に約40ずつ、計' + C.tests + '通りの売買ルールを当て、取引コスト・多重検定・検証期間の3つで同時にふるいにかけた結果です。左から順に生き残りが減っていきます。';
+$('funnel').innerHTML = [['検定したルール', C.tests, ''], ['コスト控除後に平均プラス', C.plus, ''], ['単独なら有意 (p<0.05)', C.raw, ''], ['多重検定の補正後も有意', C.fdr, ''], ['全関門を通過', C.all, 'final']]
+  .map(x => '<div class="fstep ' + x[2] + '"><div class="v">' + x[1] + '</div><div class="k">' + esc(x[0]) + '</div><div class="bar"><i style="width:' + Math.max(1.5, x[1] / C.tests * 100) + '%"></i></div></div>').join('');
+(function () {
+  const hr = S.map(s => ({ s: s, r: s.rows.find(r => r.name === HEAD) })).filter(x => x.r);
+  const hf = hr.filter(x => posFdr(x.r)), ha = hr.filter(x => x.r.verdict === '有望(要追試)');
+  const others = allRows.filter(r => posFdr(r) && r.name !== HEAD);
+  const otherNames = Array.from(new Set(others.map(r => r.name)));
+  $('finding').innerHTML = '<div class="mark">結論</div><div>' +
+    '<p><strong>多重検定の補正を通ったプラスのルールは、ほぼ「RSI(2)が10未満で買い、5日保有」だけでした。</strong> ' +
+    hr.length + '銘柄中' + hf.length + '銘柄（' + hf.map(x => esc(x.s.label)).join('・') + '）で補正後も有意、' +
+    (ha.length ? 'うち' + ha.map(x => esc(x.s.label)).join('と') + 'では全関門を通過しました（平均 ' + ha.map(x => sg(x.r.mean, 0) + 'bps').join(' / ') + '）。' : '全関門を通ったものはありません。') +
+    (otherNames.length ? 'ほかに補正を通ったプラスのルールは' + others.length + '件（' + otherNames.map(esc).join('、') + '）。' : 'ほかに補正を通ったプラスのルールはありません。') + '</p>' +
+    '<p>銘柄間で同じ急落日に点灯するため、独立した' + hr.length + '回の確認ではありません。また<a href="#sim">シミュレーター</a>で見ると、このルールで売買するより、同じ期間ただ持ち続けた方が資金は大きく増えています。</p></div>';
+})();
+
+/* ---------- heatmap ---------- */
+function renderHM() {
+  let h = '<thead><tr><th class="rl">ルール</th>' + S.map(s => '<th>' + esc(s.label) + '<span class="tk">' + esc(s.symbol) + '</span></th>').join('') + '</tr></thead><tbody>';
+  let shown = 0;
+  [['日足ルール', false], ['5分足ルール · 直近約2か月のみ', true]].forEach(g => {
+    const list = rules.filter(n => n.intra === g[1] && ruleOk(n));
+    if (!list.length) return;
+    h += '<tr class="grp"><th class="rl" colspan="' + (S.length + 1) + '">' + g[0] + '</th></tr>';
+    list.forEach(n => {
+      shown++;
+      h += '<tr><th class="rl" scope="row">' + hl(n.name) + '</th>';
+      S.forEach((s, si) => {
+        const r = n.cells[si];
+        if (!r) { h += '<td><span class="cell na">—</span></td>'; return; }
+        const g2 = glyphOf(r.verdict);
+        const dim = !rowOk(r) ? ';opacity:.35' : '';
+        const sel = si === state.si && r.name === state.name ? ' sel' : '';
+        h += '<td><button type="button" class="cell' + sel + '" data-si="' + si + '" data-name="' + esc(r.name) + '" style="background:' + cellBg(r.mean) + dim + '" aria-label="' + esc(s.label + ' ' + r.name + ' 平均' + sg(r.mean) + 'bps ' + r.verdict) + '">' +
+          (g2 ? '<span class="glyph" style="color:' + g2[1] + '">' + g2[0] + '</span>' : '') + sg(r.mean, 0) + '</button></td>';
+      });
+      h += '</tr>';
+    });
+  });
+  if (!shown) h += '<tr><td colspan="' + (S.length + 1) + '"><div class="empty">該当するルールがありません。検索語を短くするか、判定を「すべての判定」に戻してください。</div></td></tr>';
+  $('hm').innerHTML = h + '</tbody>';
+}
+$('hm').addEventListener('click', e => {
+  const b = e.target.closest('button.cell'); if (!b) return;
+  state.si = +b.dataset.si; state.name = b.dataset.name; renderDetail();
+  $('detail-sec').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+});
+$('hm').addEventListener('pointermove', e => {
+  const b = e.target.closest('button.cell'); if (!b) { hideTip(); return; }
+  const s = S[+b.dataset.si]; showTip(rowTip(s, findRow(s, b.dataset.name)), e.clientX, e.clientY);
+});
+$('hm').addEventListener('pointerleave', hideTip);
+
+/* ---------- ticker tabs ---------- */
+function renderTabs() {
+  $('tabs').innerHTML = S.map((s, i) => '<button type="button" class="tab" role="tab" aria-selected="' + (i === state.si) + '" tabindex="' + (i === state.si ? 0 : -1) + '" data-i="' + i + '">' + esc(s.label) + '<span class="tk">' + esc(s.symbol) + '</span></button>').join('');
+  const s = S[state.si], c = counts(s.rows);
+  $('meta').innerHTML = '<span>日足 <b class="num">' + s.bars.toLocaleString() + '</b> 本（' + s.start + ' 〜 ' + s.end + '）</span>' +
+    (s.sessions5m ? '<span>5分足 <b class="num">' + s.sessions5m + '</b> 営業日</span>' : '<span>5分足なし（指数）</span>') +
+    '<span>往復コスト <b class="num">' + f(s.cost, 0) + '</b> bps</span><span>検証期間: ' + s.split + ' 以降</span>';
+  $('mfun').innerHTML = [['検定', c.tests], ['平均プラス', c.plus], ['単独で有意', c.raw], ['補正後も有意', c.fdr], ['全関門', c.all]]
+    .map(x => '<span>' + x[0] + '<b>' + x[1] + '</b></span>').join('<span class="arr">→</span>');
+}
+function pickTicker(i) {
+  state.si = i;
+  if (!S[i].rows.some(r => r.name === state.name)) state.name = S[i].rows[0].name;
+  renderDetail();
+}
+$('tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) pickTicker(+b.dataset.i); });
+$('tabs').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  const n = (state.si + (e.key === 'ArrowRight' ? 1 : -1) + S.length) % S.length;
+  pickTicker(n); $('tabs').querySelector('[data-i="' + n + '"]').focus();
+});
+
+/* ---------- forest ---------- */
+function renderForest() {
+  const s = S[state.si];
+  const vals = [];
+  s.rows.forEach(r => { vals.push(isNum(r.lo) ? r.lo : r.mean, isNum(r.hi) ? r.hi : r.mean); });
+  let lo = Math.min.apply(null, [0].concat(vals.filter(isNum))), hi = Math.max.apply(null, [0].concat(vals.filter(isNum)));
+  const st = niceStep(hi - lo); lo = Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st;
+  const X = v => ((v - lo) / (hi - lo) * 100).toFixed(2) + '%';
+  const ticks = []; for (let t = lo; t <= hi + 1e-9; t += st) ticks.push(Math.round(t * 100) / 100);
+  const grid = ticks.map(t => '<span class="' + (t === 0 ? 'z' : 'gl') + '" style="left:' + X(t) + '"></span>').join('');
+  const row = r => {
+    const c = r.mean >= 0 ? 'var(--pos)' : 'var(--neg)';
+    const ci = isNum(r.lo) ? '<span class="ci" style="left:' + X(r.lo) + ';width:calc(' + X(r.hi) + ' - ' + X(r.lo) + ');background:' + c + '"></span>' : '';
+    return '<button type="button" class="fr' + (r.name === state.name ? ' sel' : '') + '" data-name="' + esc(r.name) + '"><span class="nm">' + hl(r.name) + '</span>' +
+      '<span class="strip">' + grid + ci + '<span class="pt" style="left:' + X(r.mean) + ';background:' + c + '"></span></span><span class="val">' + sg(r.mean) + '</span></button>';
+  };
+  const ok = r => nameOk(ruleBy.get(r.name)) && rowOk(r);
+  const d = s.rows.filter(r => !isIntra(r) && ok(r)).sort((a, b) => b.mean - a.mean);
+  const i = s.rows.filter(r => isIntra(r) && ok(r)).sort((a, b) => b.mean - a.mean);
+  const body = (d.length ? '<div class="fgrp">日足ルール</div>' + d.map(row).join('') : '') +
+    (i.length ? '<div class="fgrp">5分足ルール · 標本 ' + s.sessions5m + ' 日</div>' + i.map(row).join('') : '');
+  $('forest').innerHTML = '<div class="f-axis"><span></span><div class="ticks">' + ticks.map(t => '<span style="left:' + X(t) + '">' + t + '</span>').join('') + '</div><span style="text-align:right">bps</span></div>' +
+    (body || '<div class="empty">この銘柄には検索条件に合うルールがありません。</div>');
+}
+$('forest').addEventListener('click', e => { const b = e.target.closest('.fr'); if (!b) return; state.name = b.dataset.name; renderDetail(); });
+$('forest').addEventListener('pointermove', e => {
+  const b = e.target.closest('.fr'); if (!b) { hideTip(); return; }
+  const s = S[state.si]; showTip(rowTip(s, findRow(s, b.dataset.name)), e.clientX, e.clientY);
+});
+$('forest').addEventListener('pointerleave', hideTip);
+
+/* ---------- selected rule ---------- */
+function renderSel() {
+  const s = S[state.si], r = findRow(s, state.name);
+  const gate = (ok, label, val, desc) => '<div class="gate ' + (ok === null ? 'na' : ok ? 'ok' : 'ng') + '"><span class="ic">' + (ok === null ? '–' : ok ? '✓' : '✗') + '</span><span>' + label + '<span class="gd">' + desc + '</span></span><span class="gv">' + val + '</span></div>';
+  const same = isNum(r.is) && isNum(r.oos) ? (Math.sign(r.is) === Math.sign(r.oos) && r.mean > 0) : null;
+  $('sel').innerHTML =
+    '<div style="display:grid;gap:6px"><div class="eyebrow">' + esc(s.label) + ' · ' + esc(s.symbol) + '</div>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between"><h3 style="font-size:17px">' + esc(r.name) + '</h3>' + chip(r.verdict) + '</div>' +
+    '<p class="note" style="color:var(--ink-2)">' + esc(r.doc.cond) + ' → ' + esc(r.doc.entry) + '、' + esc(r.doc.exit) + '</p></div>' +
+    '<div class="gates">' +
+    gate(r.mean > 0, 'コスト控除後の平均がプラス', sg(r.mean) + ' bps', '手数料とスプレッドを毎回差し引いた後の1回あたり損益') +
+    gate(isNum(r.p) ? (r.p < 0.05 && r.mean > 0) : null, '単独で見て有意', 'p ' + pf(r.p), '保有期間の重なりを補正した t 検定') +
+    gate(isNum(r.fdr) ? (r.fdr < 0.05 && r.mean > 0) : null, '多重検定の補正後も有意', 'p ' + pf(r.fdr), '試したルールの数を織り込んだ p 値') +
+    gate(isNum(r.ctrl) ? (r.ctrl < 0.05 && r.mean > 0) : null, 'シグナルが出ない日より良い', isNum(r.ctrl) ? 'p ' + pf(r.ctrl) : '対照なし', '上昇相場で持っていただけ、を除外する比較') +
+    gate(same, '後半の検証期間でも同じ向き', sg(r.is, 0) + ' → ' + sg(r.oos, 0), '前半70%の傾向が ' + s.split + ' 以降も続いたか') +
+    gate(isNum(r.dsr) ? (r.dsr > 0.95 && r.mean > 0) : null, '試行回数で割り引いても残る', 'DSR ' + f(r.dsr, 2), 'Deflated Sharpe Ratio。0.95 超で合格') +
+    '</div><div class="stats">' +
+    [['取引回数', r.n.toLocaleString()], ['勝率', f(r.win) + '%'], ['年率シャープ', f(r.sharpe, 2)], ['95%信頼区間', sg(r.lo, 0) + '〜' + sg(r.hi, 0)], ['損益分岐コスト', f(r.gross) + 'bps'], ['最大下落', f(r.dd) + '%']]
+      .map(x => '<div class="stat"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div></div>').join('') +
+    '</div><div class="chart" id="eq"></div>' +
+    (isIntra(r) ? '<p class="note">5分足は標本 ' + s.sessions5m + ' 日。5bps の優位性を見つけられる確率（検出力）は ' + f((r.power || 0) * 100, 0) + '% です。</p>' : '') +
+    (isIntra(r) ? '' : '<div><a class="btn" href="#sim" id="go-sim">このルールでシミュレーション →</a></div>');
+  const g = $('go-sim');
+  if (g) g.addEventListener('click', () => setSim(state.si, r.name));
+  renderEq(s, r);
+}
+function renderDetail() { renderHM(); renderTabs(); renderForest(); renderSel(); }
+
+/* ---------- shared line chart ---------- */
+function lineChart(box, o) {
+  // o: {series:[{pts:[[t,v]], color, width, area}], H, fmtY, log, shadeFrom, zero, tipFmt, legend}
+  const W = Math.max(280, box.clientWidth || 480), H = o.H || 220;
+  const m = { l: o.ml || 48, r: 12, t: 10, b: 26 };
+  const all = [];
+  o.series.forEach(s => s.pts.forEach(p => all.push(p)));
+  if (!all.length) { box.innerHTML = '<div class="empty">表示できるデータがありません。</div>'; return; }
+  const tr = v => o.log ? Math.log10(Math.max(v, 1)) : v;
+  const x0 = Math.min.apply(null, all.map(p => p[0])), x1 = Math.max.apply(null, all.map(p => p[0]));
+  let y0 = Math.min.apply(null, all.map(p => tr(p[1]))), y1 = Math.max.apply(null, all.map(p => tr(p[1])));
+  let yt = [];
+  if (o.log) {
+    const lo = Math.floor(y0), hi = Math.ceil(y1);
+    for (let k = lo; k <= hi; k++) [1, 2, 5].forEach(mlt => { const v = Math.log10(mlt) + k; if (v >= y0 - 0.05 && v <= y1 + 0.05) yt.push(v); });
+    if (yt.length < 2) yt = [y0, y1];
+    y0 = Math.min(y0, yt[0]); y1 = Math.max(y1, yt[yt.length - 1]);
+  } else {
+    if (o.zero) { y0 = Math.min(0, y0); y1 = Math.max(0, y1); }
+    const st = niceStep((y1 - y0) || Math.abs(y1) || 1); y0 = Math.floor(y0 / st) * st; y1 = Math.ceil(y1 / st) * st;
+    for (let v = y0; v <= y1 + st * 1e-6; v += st) yt.push(Math.round(v / st) * st);
+  }
+  const X = t => m.l + (t - x0) / ((x1 - x0) || 1) * (W - m.l - m.r);
+  const Y = v => m.t + (1 - (tr(v) - y0) / ((y1 - y0) || 1)) * (H - m.t - m.b);
+  const Yr = v => m.t + (1 - (v - y0) / ((y1 - y0) || 1)) * (H - m.t - m.b);
+  const path = pts => pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('');
+  const base = o.zero && !o.log ? Yr(0) : H - m.b;
+  const xt = [];
+  const ys = new Date(x0).getUTCFullYear(), ye = new Date(x1).getUTCFullYear(), yrs = ye - ys;
+  if (yrs >= 2) { const step = yrs > 12 ? 5 : yrs > 6 ? 2 : 1; for (let y = ys + 1; y <= ye; y++) if (y % step === 0) xt.push([Date.UTC(y, 0, 1), String(y)]); }
+  else { const d = new Date(x0); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + 1); while (d.getTime() <= x1) { xt.push([d.getTime(), (d.getUTCMonth() + 1) + '月']); d.setUTCMonth(d.getUTCMonth() + 1); } }
+  const fy = o.fmtY || (v => String(v));
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.label || '推移') + '">';
+  if (o.shadeFrom && o.shadeFrom > x0 && o.shadeFrom < x1) svg += '<rect x="' + X(o.shadeFrom).toFixed(1) + '" y="' + m.t + '" width="' + (X(x1) - X(o.shadeFrom)).toFixed(1) + '" height="' + (H - m.t - m.b) + '" fill="var(--accent-soft)"/>';
+  yt.forEach(v => {
+    const yy = Yr(v);
+    svg += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="' + (o.zero && Math.abs(v) < 1e-9 ? 'var(--axis)' : 'var(--line)') + '" stroke-width="1"/>' +
+      '<text x="' + (m.l - 6) + '" y="' + (yy + 3.5).toFixed(1) + '" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="var(--f-num)">' + esc(fy(o.log ? Math.pow(10, v) : v)) + '</text>';
+  });
+  xt.forEach(t => { svg += '<text x="' + X(t[0]).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="var(--muted)" font-family="var(--f-num)">' + t[1] + '</text>'; });
+  o.series.forEach(s => {
+    if (!s.pts.length) return;
+    if (s.area) svg += '<path d="' + path(s.pts) + 'L' + X(s.pts[s.pts.length - 1][0]).toFixed(1) + ' ' + base.toFixed(1) + 'L' + X(s.pts[0][0]).toFixed(1) + ' ' + base.toFixed(1) + 'Z" fill="' + s.color + '" fill-opacity="' + (s.areaOpacity || 0.06) + '"/>';
+    svg += '<path d="' + path(s.pts) + '" fill="none" stroke="' + s.color + '" stroke-width="' + (s.width || 2) + '" stroke-linejoin="round"/>';
+  });
+  const main = o.series[0].pts, last = main[main.length - 1];
+  if (last) svg += '<circle cx="' + X(last[0]).toFixed(1) + '" cy="' + Y(last[1]).toFixed(1) + '" r="4" fill="' + o.series[0].color + '" stroke="var(--surface)" stroke-width="2"/>';
+  svg += '<g class="xh" visibility="hidden"><line y1="' + m.t + '" y2="' + (H - m.b) + '" stroke="var(--ink-2)" stroke-width="1" stroke-dasharray="3 3"/><circle r="4" fill="' + o.series[0].color + '" stroke="var(--surface)" stroke-width="2"/></g>';
+  svg += '<rect class="hit" x="' + m.l + '" y="' + m.t + '" width="' + (W - m.l - m.r) + '" height="' + (H - m.t - m.b) + '" fill="transparent"/></svg>';
+  box.innerHTML = (o.legend ? '<div class="lg">' + o.legend + '</div>' : '') + svg;
+  const el = box.querySelector('svg'), xh = el.querySelector('.xh');
+  const near = (pts, t) => { let lo2 = 0, hi2 = pts.length - 1; while (hi2 - lo2 > 1) { const mid = (lo2 + hi2) >> 1; if (pts[mid][0] < t) lo2 = mid; else hi2 = mid; } return Math.abs(pts[lo2][0] - t) <= Math.abs(pts[hi2][0] - t) ? pts[lo2] : pts[hi2]; };
+  el.querySelector('.hit').addEventListener('pointermove', e => {
+    const rc = el.getBoundingClientRect(), px = (e.clientX - rc.left) / rc.width * W;
+    const t = x0 + (px - m.l) / (W - m.l - m.r) * (x1 - x0);
+    const p = near(main, t);
+    xh.setAttribute('visibility', 'visible');
+    const ln = xh.querySelector('line'), ci = xh.querySelector('circle');
+    ln.setAttribute('x1', X(p[0])); ln.setAttribute('x2', X(p[0])); ci.setAttribute('cx', X(p[0])); ci.setAttribute('cy', Y(p[1]));
+    showTip(o.tipFmt(p, o.series.slice(1).map(s => s.pts.length ? near(s.pts, p[0]) : null)), e.clientX, e.clientY);
+  });
+  el.querySelector('.hit').addEventListener('pointerleave', () => { xh.setAttribute('visibility', 'hidden'); hideTip(); });
+}
+const isoDay = t => new Date(t).toISOString().slice(0, 10);
+function thin(pts, n) { if (pts.length <= n) return pts; const out = []; for (let i = 0; i < n; i++) out.push(pts[Math.round(i * (pts.length - 1) / (n - 1))]); return out; }
+
+/* ---------- cumulative chart on results ---------- */
+function cumPoints(s, name, cost) {
+  const t = s.trades[name]; if (!t) return [];
+  const ev = t.e.map((e, i) => [exitIdx(e, t.basis, t.h), t.r[i] - cost * 1e-4]).filter(x => x[0] < s.dates.length).sort((a, b) => a[0] - b[0]);
+  let acc = 0; const pts = [];
+  ev.forEach(x => { acc += x[1] * 100; pts.push([Date.parse(s.dates[x[0]]), acc]); });
+  return thin(pts, 320);
+}
+function bhCum(s, i0, i1) {
+  let acc = 0; const pts = [[Date.parse(s.dates[i0]), 0]];
+  for (let i = i0 + 1; i <= i1; i++) { acc += (s.tr[i] / s.tr[i - 1] - 1) * 100; pts.push([Date.parse(s.dates[i]), acc]); }
+  return thin(pts, 320);
+}
+function renderEq(s, r) {
+  const box = $('eq'); if (!box || $('v-results').hidden) return;
+  const strat = cumPoints(s, r.name, s.cost);
+  const intra = isIntra(r);
+  const bh = intra || !strat.length ? [] : bhCum(s, 0, s.dates.length - 1);
+  lineChart(box, {
+    series: [{ pts: strat, color: 'var(--ink)', area: true }, { pts: bh, color: 'var(--muted)', width: 1.5 }],
+    zero: true, shadeFrom: intra ? null : Date.parse(s.split), fmtY: v => Math.round(v) + '%', label: r.name + ' の累積損益',
+    legend: '<span><i style="background:var(--ink)"></i>このルール（1回ごとの損益%を合計）</span>' + (bh.length ? '<span><i style="background:var(--muted)"></i>ただ持ち続けた場合</span>' : '') + (intra ? '' : '<span><i style="background:var(--accent-soft);height:10px"></i>検証期間</span>'),
+    tipFmt: (p, o2) => '<div class="num">' + isoDay(p[0]) + '</div><div class="num">このルール ' + sg(p[1]) + '%</div>' + (o2[0] ? '<div class="num">持ち続け ' + sg(o2[0][1]) + '%</div>' : ''),
+  });
+}
+
+/* ---------- simulation engine (sim.py / edgelab/simulate.py と同じ計算) ---------- */
+function exitIdx(e, basis, h) { return basis === 'c2c' ? e + h : basis === 'c2o' ? e + 1 : e; }
+function simulate(s, t, o) {
+  const cost = o.cost * 1e-4;
+  let cash = o.cap, peak = o.cap, streak = 0;
+  const open = [];
+  const res = { curve: [[o.start, o.cap]], trades: [], yearly: {}, wins: 0, gw: 0, gl: 0, maxdd: 0, maxStreak: 0, executed: 0, skipped: 0, nets: [], fracs: [] };
+  const openSum = () => open.reduce((a, p) => a + p.alloc, 0);
+  function closeUntil(T) {
+    open.sort((a, b) => a.x - b.x);
+    while (open.length && open[0].x <= T) {
+      const p = open.shift(), pnl = p.alloc * p.net;
+      cash += p.alloc + pnl;
+      const eq = cash + openSum();
+      res.curve.push([p.x, eq]);
+      if (eq > peak) peak = eq;
+      res.maxdd = Math.min(res.maxdd, eq / peak - 1);
+      const y = s.dates[p.x].slice(0, 4);
+      res.yearly[y] = (res.yearly[y] || 0) + pnl;
+      if (pnl > 0) { res.wins++; res.gw += pnl; streak = 0; } else { res.gl -= pnl; streak++; res.maxStreak = Math.max(res.maxStreak, streak); }
+      res.trades.push({ e: p.e, x: p.x, alloc: p.alloc, shares: p.shares, net: p.net, pnl: pnl });
+    }
+  }
+  const order = t.e.map((e, i) => i).sort((a, b) => t.e[a] - t.e[b]);
+  for (let k = 0; k < order.length; k++) {
+    const i = order[k], e = t.e[i], r = t.r[i], x = exitIdx(e, t.basis, t.h);
+    if (e < o.start || x > o.end || x >= s.dates.length) continue;
+    closeUntil(e);
+    const base = o.compound ? cash + openSum() : o.cap;
+    let alloc = Math.min(base * o.frac, cash), shares = 0;
+    if (o.lot) { const unit = s.px[e] * 100; shares = unit > 0 ? Math.floor(alloc / unit) * 100 : 0; alloc = shares * s.px[e]; }
+    if (!(alloc > 0)) { res.skipped++; continue; }
+    res.fracs.push(alloc / (cash + openSum()));
+    cash -= alloc;
+    open.push({ e: e, x: x, alloc: alloc, shares: shares, net: r - cost });
+    res.executed++; res.nets.push(r - cost);
+  }
+  closeUntil(Infinity);
+  res.final = cash;
+  return res;
+}
+function rng(seed) { let a = seed >>> 0; return function () { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function monteCarlo(nets, frac, cap, runs) {
+  const R = rng(20260914), n = nets.length, finals = [], dds = [];
+  for (let k = 0; k < runs; k++) {
+    let eq = cap, pk = cap, dd = 0;
+    for (let j = 0; j < n; j++) { eq *= 1 + frac * nets[Math.floor(R() * n)]; if (eq > pk) pk = eq; const d2 = eq / pk - 1; if (d2 < dd) dd = d2; }
+    finals.push(eq); dds.push(dd);
+  }
+  finals.sort((a, b) => a - b); dds.sort((a, b) => a - b);
+  const q = (arr, p) => arr[Math.min(arr.length - 1, Math.max(0, Math.round(p * (arr.length - 1))))];
+  return { finals: finals, p05: q(finals, 0.05), p50: q(finals, 0.5), p95: q(finals, 0.95), loss: finals.filter(v => v < cap).length / runs, dd50: q(dds, 0.5), dd05: q(dds, 0.05) };
+}
+
+/* ---------- simulator UI ---------- */
+const SIM = { si: Math.max(0, S.findIndex(s => s.symbol === '6758.T')), name: HEAD, shown: 50 };
+function simRules(s) { return s.rows.filter(r => s.trades[r.name]); }
+function fillSimSym() {
+  $('sim-sym').innerHTML = S.map((s, i) => '<option value="' + i + '">' + esc(s.label + '（' + s.symbol + '）') + '</option>').join('');
+}
+function fillSimRule() {
+  const s = S[SIM.si], rs = simRules(s);
+  const opt = r => { const g = glyphOf(r.verdict); return '<option value="' + esc(r.name) + '">' + (g ? g[0] + ' ' : '') + esc(r.name) + '（' + sg(r.mean) + 'bps）</option>'; };
+  const d = rs.filter(r => !isIntra(r)).sort((a, b) => ruleScore(ruleBy.get(b.name)) - ruleScore(ruleBy.get(a.name)));
+  const i = rs.filter(isIntra);
+  $('sim-rule').innerHTML = '<optgroup label="日足ルール">' + d.map(opt).join('') + '</optgroup>' + (i.length ? '<optgroup label="5分足ルール（約2か月分）">' + i.map(opt).join('') + '</optgroup>' : '');
+  if (!rs.some(r => r.name === SIM.name)) SIM.name = (d[0] || rs[0]).name;
+  $('sim-rule').value = SIM.name;
+  const y0 = +s.start.slice(0, 4), y1 = +s.end.slice(0, 4), yrs = [];
+  for (let y = y0; y <= y1; y++) yrs.push(y);
+  const keep0 = +$('sim-y0').value, keep1 = +$('sim-y1').value;
+  $('sim-y0').innerHTML = yrs.map(y => '<option>' + y + '</option>').join('');
+  $('sim-y1').innerHTML = yrs.map(y => '<option>' + y + '</option>').join('');
+  $('sim-y0').value = String(keep0 >= y0 && keep0 <= y1 ? keep0 : y0);
+  $('sim-y1').value = String(keep1 >= y0 && keep1 <= y1 ? keep1 : y1);
+}
+function setSim(si, name) {
+  const changed = SIM.si !== si;
+  SIM.si = si; SIM.name = name || SIM.name;
+  $('sim-sym').value = String(si);
+  if (changed) { $('sim-cost').value = S[si].cost; $('sim-lot').checked = S[si].symbol.charAt(0) !== '^'; }
+  fillSimRule();
+}
+function simOpts() {
+  const s = S[SIM.si];
+  const y0 = +$('sim-y0').value, y1 = Math.max(y0, +$('sim-y1').value);
+  let start = s.dates.findIndex(d => +d.slice(0, 4) >= y0); if (start < 0) start = 0;
+  let end = s.dates.length - 1; while (end > 0 && +s.dates[end].slice(0, 4) > y1) end--;
+  return {
+    cap: Math.max(10000, +$('sim-cap').value || 3000000),
+    frac: Math.min(100, Math.max(1, +$('sim-frac').value || 50)) / 100,
+    cost: Math.max(0, +$('sim-cost').value || 0),
+    compound: $('sim-comp-c').checked, lot: $('sim-lot').checked, start: start, end: end,
+  };
+}
+let simTimer;
+function queueSim() { clearTimeout(simTimer); simTimer = setTimeout(runSim, 60); }
+let lastSim = null;
+function runSim() {
+  if ($('v-sim').hidden) return;
+  const s = S[SIM.si], r = findRow(s, SIM.name), t = s.trades[SIM.name], o = simOpts();
+  $('sim-rule-doc').textContent = r.doc.cond + ' → ' + r.doc.entry + '、' + r.doc.exit;
+  const res = simulate(s, t, o);
+  lastSim = { s: s, r: r, o: o, res: res };
+  SIM.shown = 50;
+  renderSimOut();
+}
+function renderSimOut() {
+  const L = lastSim; if (!L) return;
+  const s = L.s, r = L.r, o = L.o, res = L.res;
+  const days = (Date.parse(s.dates[o.end]) - Date.parse(s.dates[o.start])) / 864e5;
+  const yrs = Math.max(days / 365.25, 1 / 365);
+  const cagr = res.final > 0 ? Math.pow(res.final / o.cap, 1 / yrs) - 1 : -1;
+  const bhFinal = o.cap * s.tr[o.end] / s.tr[o.start];
+  const bhCagr = Math.pow(bhFinal / o.cap, 1 / yrs) - 1;
+  const pfv = res.gl > 0 ? res.gw / res.gl : (res.gw > 0 ? Infinity : NaN);
+  const pct = v => (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(1) + '%';
+  const intra = isIntra(r);
+  $('sim-head').innerHTML = esc(s.label) + 'で「' + esc(r.name) + '」を' + s.dates[o.start] + 'から' + s.dates[o.end] + 'まで続けると、' +
+    '<b>' + yenShort(o.cap) + '円</b>は<b class="' + (res.final >= o.cap ? 'up' : 'dn') + '">' + yen(res.final) + '（' + pct(res.final / o.cap - 1) + '）</b>になりました。' +
+    (intra ? '' : '同じ期間、最初に全額買って持ち続けていれば<b>' + yen(bhFinal) + '（' + pct(bhFinal / o.cap - 1) + '）</b>です。');
+  const warns = [];
+  if (!res.executed) warns.push('<b>1回も売買できませんでした。</b>' + (o.lot ? '100株の購入資金に届いていない可能性があります。初期資金か1回に使う割合を増やすか、「100株単位で買う」を外してください。' : '期間を広げてください。'));
+  else if (res.skipped > 0) warns.push('<b>資金不足で ' + res.skipped + ' 回見送りました</b>（ルールのシグナル ' + (res.executed + res.skipped) + ' 回中）。保有中で現金が足りない、または100株分に届かなかった回です。');
+  if (!intra && res.executed && bhFinal > res.final) warns.push('<b>持ち続けた方が ' + yen(bhFinal - res.final) + ' 多く増えています。</b>このルールは相場にいる時間が短いため、上昇相場では持ち続けに負けやすくなります。');
+  if (intra) warns.push('<b>5分足のルールは直近約2か月分しかありません。</b>結果は参考程度に見てください。');
+  $('sim-warn').innerHTML = warns.map(w => '<div class="warnbox">' + w + '</div>').join('<div style="height:8px"></div>');
+  const kpi = (k, v, sub, cls) => '<div class="kpi"><div class="k">' + k + '</div><div class="v ' + (cls || '') + '">' + v + '</div>' + (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>';
+  $('sim-kpi').innerHTML =
+    kpi('最終資産', yenShort(res.final) + '円', '損益 ' + (res.final >= o.cap ? '+' : '−') + yenShort(Math.abs(res.final - o.cap)) + '円', res.final >= o.cap ? 'up' : 'dn') +
+    kpi('年率リターン', pct(cagr), intra ? '' : '持ち続け ' + pct(bhCagr)) +
+    kpi('最大下落', pct(res.maxdd), '最大連敗 ' + res.maxStreak + ' 回') +
+    kpi('勝率', res.executed ? (res.wins / res.executed * 100).toFixed(1) + '%' : '—', res.wins + '勝 ' + (res.executed - res.wins) + '敗') +
+    kpi('プロフィットファクター', isFinite(pfv) ? pfv.toFixed(2) : pfv === Infinity ? '∞' : '—', '利益合計 ÷ 損失合計') +
+    kpi('取引回数', res.executed.toLocaleString() + ' 回', res.skipped ? '見送り ' + res.skipped + ' 回' : '見送りなし');
+  // equity
+  const eqPts = res.curve.map(p => [Date.parse(s.dates[p[0]]), p[1]]);
+  eqPts.push([Date.parse(s.dates[o.end]), res.final]);
+  eqPts.sort((a, b) => a[0] - b[0]);
+  const bhPts = [];
+  for (let i = o.start; i <= o.end; i++) bhPts.push([Date.parse(s.dates[i]), o.cap * s.tr[i] / s.tr[o.start]]);
+  const logy = $('sim-log').checked;
+  lineChart($('sim-eq'), {
+    series: [{ pts: thin(eqPts, 600), color: 'var(--ink)', area: !logy }, { pts: intra ? [] : thin(bhPts, 400), color: 'var(--muted)', width: 1.5 }],
+    H: 260, ml: 56, log: logy, zero: false, fmtY: v => yenShort(v), label: '資産の推移',
+    legend: '<span><i style="background:var(--ink)"></i>このルール（決済ごとに更新）</span>' + (intra ? '' : '<span><i style="background:var(--muted)"></i>ただ持ち続けた場合</span>'),
+    tipFmt: (p, o2) => '<div class="num">' + isoDay(p[0]) + '</div><div class="num">このルール ' + yen(p[1]) + '</div>' + (o2[0] ? '<div class="num">持ち続け ' + yen(o2[0][1]) + '</div>' : ''),
+  });
+  // drawdown
+  let pk = -Infinity; const ddPts = eqPts.map(p => { pk = Math.max(pk, p[1]); return [p[0], (p[1] / pk - 1) * 100]; });
+  lineChart($('sim-dd'), {
+    series: [{ pts: thin(ddPts, 500), color: 'var(--neg)', area: true, areaOpacity: 0.18, width: 1.5 }],
+    H: 170, zero: true, fmtY: v => Math.round(v) + '%', label: '高値からの下落',
+    tipFmt: p => '<div class="num">' + isoDay(p[0]) + '</div><div class="num">高値から ' + sg(p[1]) + '%</div>',
+  });
+  renderYearly(res.yearly);
+  renderMC(res, o);
+  renderTrades();
+}
+function renderYearly(yearly) {
+  const box = $('sim-yr'), ys = Object.keys(yearly).sort();
+  if (!ys.length) { box.innerHTML = '<div class="empty">確定した取引がありません。</div>'; return; }
+  const W = Math.max(280, box.clientWidth || 420), H = 170, m = { l: 48, r: 8, t: 14, b: 24 };
+  const vals = ys.map(y => yearly[y]);
+  let lo = Math.min(0, Math.min.apply(null, vals)), hi = Math.max(0, Math.max.apply(null, vals));
+  const st = niceStep((hi - lo) || 1, 4); lo = Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st;
+  const Y = v => m.t + (1 - (v - lo) / ((hi - lo) || 1)) * (H - m.t - m.b);
+  const bw = (W - m.l - m.r) / ys.length, gap = Math.min(4, bw * 0.25);
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="年ごとの確定損益">';
+  for (let v = lo; v <= hi + st * 1e-6; v += st) {
+    const yy = Y(v);
+    svg += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="' + (Math.abs(v) < 1e-6 ? 'var(--axis)' : 'var(--line)') + '"/><text x="' + (m.l - 6) + '" y="' + (yy + 3.5).toFixed(1) + '" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="var(--f-num)">' + yenShort(v) + '</text>';
+  }
+  const every = ys.length > 10 ? Math.ceil(ys.length / 8) : 1;
+  ys.forEach((y, i) => {
+    const v = yearly[y], x = m.l + i * bw + gap / 2, y0 = Y(0), y1 = Y(v), h = Math.max(1, Math.abs(y1 - y0));
+    const top = Math.min(y0, y1), rr = Math.min(4, h, (bw - gap) / 2);
+    const w = bw - gap, c = v >= 0 ? 'var(--pos)' : 'var(--neg)';
+    const d = v >= 0
+      ? 'M' + x + ' ' + y0 + 'V' + (top + rr) + 'Q' + x + ' ' + top + ' ' + (x + rr) + ' ' + top + 'H' + (x + w - rr) + 'Q' + (x + w) + ' ' + top + ' ' + (x + w) + ' ' + (top + rr) + 'V' + y0 + 'Z'
+      : 'M' + x + ' ' + y0 + 'V' + (top + h - rr) + 'Q' + x + ' ' + (top + h) + ' ' + (x + rr) + ' ' + (top + h) + 'H' + (x + w - rr) + 'Q' + (x + w) + ' ' + (top + h) + ' ' + (x + w) + ' ' + (top + h - rr) + 'V' + y0 + 'Z';
+    svg += '<path d="' + d + '" fill="' + c + '" data-y="' + y + '"/><rect x="' + (m.l + i * bw) + '" y="' + m.t + '" width="' + bw + '" height="' + (H - m.t - m.b) + '" fill="transparent" data-y="' + y + '"/>';
+    if (i % every === 0) svg += '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="var(--f-num)">' + (ys.length > 6 ? "'" + y.slice(2) : y) + '</text>';
+  });
+  box.innerHTML = svg + '</svg>';
+  box.querySelector('svg').addEventListener('pointermove', e => {
+    const y = e.target.getAttribute && e.target.getAttribute('data-y'); if (!y) { hideTip(); return; }
+    showTip('<div class="num">' + y + '年</div><div class="num">確定損益 ' + (yearly[y] >= 0 ? '+' : '−') + yen(Math.abs(yearly[y])) + '</div>', e.clientX, e.clientY);
+  });
+  box.querySelector('svg').addEventListener('pointerleave', hideTip);
+}
+function renderMC(res, o) {
+  const box = $('sim-mc');
+  if (res.nets.length < 10) { box.innerHTML = '<div class="empty">取引が少なすぎるため計算していません。</div>'; return; }
+  const avgFrac = res.fracs.reduce((a, b) => a + b, 0) / res.fracs.length;
+  const mc = monteCarlo(res.nets, avgFrac, o.cap, 1000);
+  const lf = mc.finals.map(v => Math.log10(Math.max(v, 1)));
+  const a = lf[0], b = lf[lf.length - 1], nb = 30, bwv = ((b - a) || 1) / nb;
+  const bins = new Array(nb).fill(0); lf.forEach(v => { bins[Math.min(nb - 1, Math.floor((v - a) / bwv))]++; });
+  const W = Math.max(280, box.clientWidth || 600), H = 170, m = { l: 12, r: 12, t: 12, b: 26 };
+  const X = v => m.l + (v - a) / ((b - a) || 1) * (W - m.l - m.r);
+  const maxc = Math.max.apply(null, bins);
+  const Yc = c => H - m.b - c / maxc * (H - m.t - m.b);
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="1,000回の最終資産の分布">';
+  bins.forEach((c, i) => {
+    if (!c) return;
+    const x0 = X(a + i * bwv) + 1, x1 = X(a + (i + 1) * bwv) - 1, lowSide = Math.pow(10, a + (i + 0.5) * bwv) < o.cap;
+    svg += '<rect x="' + x0.toFixed(1) + '" y="' + Yc(c).toFixed(1) + '" width="' + Math.max(1, x1 - x0).toFixed(1) + '" height="' + (H - m.b - Yc(c)).toFixed(1) + '" rx="2" fill="' + (lowSide ? 'var(--neg)' : 'var(--ink-2)') + '" fill-opacity="' + (lowSide ? 0.75 : 0.55) + '"><title>' + yenShort(Math.pow(10, a + i * bwv)) + '〜' + yenShort(Math.pow(10, a + (i + 1) * bwv)) + '円：' + c + '回</title></rect>';
+  });
+  const mark = (v, label, dash) => {
+    const lv = Math.log10(Math.max(v, 1)); if (lv < a - 1e-9 || lv > b + 1e-9) return '';
+    const x = X(lv);
+    return '<line x1="' + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + m.t + '" y2="' + (H - m.b) + '" stroke="var(--ink)" stroke-width="1.5"' + (dash ? ' stroke-dasharray="3 3"' : '') + '/><text x="' + x.toFixed(1) + '" y="' + (H - 9) + '" text-anchor="middle" font-size="10.5" fill="var(--ink)" font-family="var(--f-num)">' + label + '</text>';
+  };
+  svg += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + (H - m.b) + '" y2="' + (H - m.b) + '" stroke="var(--axis)"/>';
+  svg += mark(o.cap, '元本 ' + yenShort(o.cap), true) + mark(mc.p50, '中央値 ' + yenShort(mc.p50), false);
+  box.innerHTML = '<div class="kpis">' +
+    '<div class="kpi"><div class="k">悪い方から5%</div><div class="v">' + yenShort(mc.p05) + '円</div></div>' +
+    '<div class="kpi"><div class="k">中央値</div><div class="v">' + yenShort(mc.p50) + '円</div></div>' +
+    '<div class="kpi"><div class="k">良い方から5%</div><div class="v">' + yenShort(mc.p95) + '円</div></div>' +
+    '<div class="kpi"><div class="k">元本割れの確率</div><div class="v ' + (mc.loss > 0.2 ? 'dn' : '') + '">' + (mc.loss * 100).toFixed(1) + '%</div></div>' +
+    '<div class="kpi"><div class="k">最大下落（中央値）</div><div class="v">' + (mc.dd50 * 100).toFixed(1) + '%</div></div>' +
+    '<div class="kpi"><div class="k">最大下落（悪い方5%）</div><div class="v">' + (mc.dd05 * 100).toFixed(1) + '%</div></div></div>' +
+    svg + '</svg><p class="note">横軸は最終資産（対数目盛）、元本を下回った結果は青。1回あたりの投入割合は、実際のシミュレーションでの平均 ' + (avgFrac * 100).toFixed(0) + '% を使っています。</p>';
+}
+function renderTrades() {
+  const L = lastSim, s = L.s, list = L.res.trades.slice().sort((a, b) => b.e - a.e || b.x - a.x);
+  const side = L.r.doc.side;
+  $('sim-tcount').textContent = list.length.toLocaleString() + ' 件中、新しい順に ' + Math.min(SIM.shown, list.length) + ' 件';
+  $('sim-trades').innerHTML = '<thead><tr><th>入った日</th><th>出た日</th><th>売買</th><th>株数</th><th>投入額</th><th>騰落（コスト後）</th><th>損益</th></tr></thead><tbody>' +
+    list.slice(0, SIM.shown).map(t => '<tr><td>' + s.dates[t.e] + '</td><td>' + s.dates[t.x] + '</td><td>' + esc(side) + '</td><td>' + (t.shares ? t.shares.toLocaleString() : '—') + '</td><td>' + yen(t.alloc) + '</td>' +
+      '<td class="' + (t.net >= 0 ? 'up' : 'dn') + '">' + (t.net >= 0 ? '+' : '−') + Math.abs(t.net * 100).toFixed(2) + '%</td><td class="' + (t.pnl >= 0 ? 'up' : 'dn') + '">' + (t.pnl >= 0 ? '+' : '−') + yen(Math.abs(t.pnl)) + '</td></tr>').join('') + '</tbody>';
+  $('sim-more').hidden = SIM.shown >= list.length;
+}
+$('sim-more').addEventListener('click', () => { SIM.shown += 50; renderTrades(); });
+$('simf').addEventListener('submit', e => e.preventDefault());
+$('sim-sym').addEventListener('change', e => { setSim(+e.target.value, SIM.name); queueSim(); });
+$('sim-rule').addEventListener('change', e => { SIM.name = e.target.value; queueSim(); });
+$('sim-frac-r').addEventListener('input', e => { $('sim-frac').value = e.target.value; queueSim(); });
+$('sim-frac').addEventListener('input', e => { $('sim-frac-r').value = e.target.value; queueSim(); });
+['sim-cap', 'sim-cost', 'sim-y0', 'sim-y1', 'sim-lot', 'sim-comp-c', 'sim-comp-s'].forEach(id => $(id).addEventListener('change', queueSim));
+['sim-cap', 'sim-cost'].forEach(id => $(id).addEventListener('input', queueSim));
+$('sim-log').addEventListener('change', renderSimOut);
+
+/* ---------- rules dictionary ---------- */
+function renderRules() {
+  const list = rules.filter(ruleOk);
+  if (!list.length) { $('rules').innerHTML = '<div class="empty" style="grid-column:1/-1">該当するルールがありません。検索語を短くするか、判定を「すべての判定」に戻してください。</div>'; return; }
+  $('rules').innerHTML = list.map(n => {
+    const best = n.cells.map((c, i) => [c, i]).filter(x => x[0]).sort((a, b) => ruleScore({ cells: [b[0]] }) - ruleScore({ cells: [a[0]] }))[0];
+    const vs = n.cells.filter(Boolean).map(c => c.verdict);
+    const top = vs.indexOf('有望(要追試)') >= 0 ? '有望(要追試)' : vs.find(v => NEAR.indexOf(v) >= 0) || null;
+    const cells = S.map((s, si) => {
+      const c = n.cells[si];
+      if (!c) return '<span class="tk-cell na" title="' + esc(s.label) + '：対象外">' + esc(s.label.slice(0, 4)) + '<span>—</span></span>';
+      const g = glyphOf(c.verdict);
+      return '<button type="button" class="tk-cell" data-si="' + si + '" data-name="' + esc(n.name) + '" style="background:' + cellBg(c.mean) + (rowOk(c) ? '' : ';opacity:.35') + '" aria-label="' + esc(s.label + ' 平均' + sg(c.mean) + 'bps ' + c.verdict) + '">' + esc(s.label.slice(0, 4)) + '<span>' + (g ? '<b style="color:' + g[1] + '">' + g[0] + '</b>' : '') + sg(c.mean, 0) + '</span></button>';
+    }).join('');
+    return '<article class="rule"><div class="hd"><h3>' + hl(n.name) + '</h3>' + (top ? chip(top) : '') + '</div>' +
+      '<div class="fm">' + esc(n.family) + ' · ' + esc(n.doc.side) + (n.intra ? ' · 5分足' : ' · 日足') + '</div>' +
+      '<dl><dt>条件</dt><dd>' + hl(n.doc.cond) + '</dd><dt>入り</dt><dd>' + hl(n.doc.entry) + '</dd><dt>出口</dt><dd>' + hl(n.doc.exit) + '</dd><dt>狙い</dt><dd>' + hl(n.doc.idea) + '</dd></dl>' +
+      '<div class="tk-row">' + cells + '</div>' +
+      '<div class="acts"><a class="btn ghost" href="#results" data-act="res" data-si="' + best[1] + '" data-name="' + esc(n.name) + '">結果を見る</a>' +
+      '<a class="btn ghost" href="#sim" data-act="sim" data-si="' + (n.cells[SIM.si] ? SIM.si : best[1]) + '" data-name="' + esc(n.name) + '">シミュレーション</a></div></article>';
+  }).join('');
+}
+$('rules').addEventListener('click', e => {
+  const b = e.target.closest('[data-si]'); if (!b) return;
+  const si = +b.dataset.si, name = b.dataset.name;
+  if (b.dataset.act === 'sim') { setSim(si, name); return; }
+  state.si = si; state.name = name; renderDetail();
+  if (!b.dataset.act) go('results');
+  setTimeout(() => $('detail-sec').scrollIntoView({ behavior: 'auto', block: 'start' }), 0);
+});
+
+/* ---------- calibration ---------- */
+(function () {
+  const t = D.selftest;
+  const bar = (label, v, max, ref, unit, color) => '<div class="cbar"><span>' + label + '</span><span class="track"><span class="fill" style="width:' + Math.min(100, v / max * 100) + '%;background:' + color + '"></span>' + (ref !== null ? '<span class="ref" style="left:' + (ref / max * 100) + '%"></span>' : '') + '</span><span class="v">' + v + unit + '</span></div>';
+  $('calib').innerHTML =
+    '<div class="panel"><h3>偶然 p&lt;0.05 になった割合</h3>' + bar('修正前', t.before.rate.toFixed(1), 15, 5, '%', 'var(--warn)') + bar('修正後', t.after.rate.toFixed(1), 15, 5, '%', 'var(--good)') +
+    '<p class="note">黒線は理論値の 5%。' + t.sims + ' 本 × 28 ルール = ' + t.tests + ' 回の検定</p></div>' +
+    '<div class="panel"><h3>法則のないデータで「有望」と判定された数</h3>' + bar('修正前', t.before.promising, 50, null, ' 件', 'var(--warn)') + bar('修正後', t.after.promising, 50, null, ' 件', 'var(--good)') +
+    '<p class="note">正しい値は 0 件。修正後は偽の「勝てるルール」を出していません</p></div>';
+})();
+
+$('foot').innerHTML = '<div>データ: Yahoo Finance（yfinance 経由、配当・株式分割を調整済み）。生成 ' + esc(D.generated) + '。過去データの統計的検定であり、将来の成績や特定の売買を勧めるものではありません。</div>' +
+  '<div>更新方法は<a href="#manual-update">説明書の「8. データの更新」</a>を参照。</div>';
+
+/* ---------- boot ---------- */
+fillSimSym(); setSim(SIM.si, HEAD); $('sim-cost').value = S[SIM.si].cost; $('sim-lot').checked = S[SIM.si].symbol.charAt(0) !== '^';
+renderFilters(); renderDetail(); renderRules();
+applyRoute((location.hash || '').slice(1));
+let rt;
+addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (state.view === 'results') { const s = S[state.si]; renderEq(s, findRow(s, state.name)); } if (state.view === 'sim') renderSimOut(); }, 150); });
+})();
+</script>
