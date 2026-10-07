@@ -40,6 +40,15 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 ```
 
+## 2-2. 自動更新
+
+- 平日 17:00（日本時間）に GitHub のサーバーが株価を取り直し、https://keita546.github.io/edgelab/ を更新する（パソコンの電源は不要）。
+- 東証の休日も動くが、その日は前の営業日と同じ内容になるだけ。
+- 実行の記録は GitHub のリポジトリの Actions タブで見られる。失敗するとその記録が赤くなる（Yahoo 側の一時的な制限などで失敗することがある。翌日には通常どおり動く）。
+- 手動で更新するときは Actions タブ →「毎日の更新」→ Run workflow、または手元で `./update.sh`。
+- 止めたいときは Actions タブ →「毎日の更新」→ 右上の「…」→ Disable workflow。
+- リポジトリを非公開に戻すときは `gh repo edit keita546/edgelab --visibility private --accept-visibility-change-consequences`。無料プランでは非公開にするとページも見られなくなる。
+
 ## 3. よく使うコマンド
 
 | やりたいこと | コマンド |

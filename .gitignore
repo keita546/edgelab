@@ -7,3 +7,5 @@ site/dashboard.html
 .DS_Store
 site/u/
 site/files.json
+out/update.log
+out/.update.lock/

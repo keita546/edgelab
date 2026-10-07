@@ -6,6 +6,8 @@
 
 **詳しい使い方は [docs/MANUAL.md](docs/MANUAL.md)。**
 
+**ダッシュボード（平日17時ごろ自動更新）: https://keita546.github.io/edgelab/**
+
 > 過去データの統計的検定であり、将来の成績や特定の売買を勧めるものではありません。
 
 ## クイックスタート
@@ -18,6 +20,13 @@ python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python build_site.py                 # → site/dashboard.html と site/u/
 .venv/bin/python -m http.server 8000 -d site   # http://localhost:8000/dashboard.html で見る
 ```
+
+## 自動更新
+
+`.github/workflows/update.yml` が平日 17:00（日本時間）に GitHub のサーバーで `update.sh` を実行し、
+GitHub Pages に公開します。パソコンの電源は不要です。手動で動かすときは Actions タブ →「毎日の更新」→ Run workflow。
+
+手元で更新するときは `./update.sh`（約6分、ログは `out/update.log`）。
 
 ## 個別のコマンド
 

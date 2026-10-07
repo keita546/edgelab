@@ -1,0 +1,52 @@
+# 平日の夕方に株価を取り直し、ダッシュボードを作り直して GitHub Pages に公開する。
+# 手動で動かすときは GitHub の Actions タブ →「毎日の更新」→ Run workflow。
+name: 毎日の更新
+
+on:
+  schedule:
+    - cron: "0 8 * * 1-5"      # 平日 17:00（日本時間）。東証の引け(15:30)後
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: ライブラリを入れる
+        run: python -m venv .venv && .venv/bin/pip install -q -r requirements.txt
+      - name: 株価の取得と検定（約10分）
+        run: ./update.sh || (tail -80 out/update.log; exit 1)
+      - name: ログ
+        if: always()
+        run: grep -E "=====|■|書き出し|site/dashboard|除外|Error|Traceback" out/update.log || true
+      - name: 公開するファイルをそろえる
+        run: |
+          cp site/dashboard.html site/index.html
+          rm -f site/dashboard.src.html site/files.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

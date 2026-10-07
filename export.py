@@ -3,6 +3,7 @@
 
   python export.py                       # 既定の銘柄セット
   python export.py 7203.T 6758.T ^N225   # 銘柄を指定
+  python export.py --refresh             # キャッシュを使わず取り直す
 """
 from __future__ import annotations
 
@@ -47,16 +48,19 @@ def _clean(v):
     return v
 
 
+REFRESH = False
+
+
 def run_one(sym: str, label: str) -> dict:
     cost = COST.get(sym, 10.0)
     years = YEARS.get(sym, 15.0)
     print(f"■ {sym} {label}  cost={cost}bps", flush=True)
-    d = data.fetch(sym, "1d", years=years)
+    d = data.fetch(sym, "1d", years=years, refresh=REFRESH)
     cands = H.daily_hypotheses(H.daily_features(d))
     sessions = 0
     if not sym.startswith("^"):
         try:
-            bars = data.fetch(sym, "5m")
+            bars = data.fetch(sym, "5m", refresh=REFRESH)
             t = H.session_table(bars)
             sessions = len(t)
             cands += H.intraday_hypotheses(bars, t)
@@ -65,7 +69,7 @@ def run_one(sym: str, label: str) -> dict:
     res = engine.evaluate(cands, cost_bps=cost, boot=2000)
 
     by = {c.name: c for c in cands}
-    raw = data.fetch(sym, "1d", years=years, adjust=False)      # 100株単位の必要資金は分割調整のみの株価で
+    raw = data.fetch(sym, "1d", years=years, adjust=False)   # 直前の fetch でキャッシュ済み      # 100株単位の必要資金は分割調整のみの株価で
     raw = raw.reindex(d.index).ffill()
     dates = [x.strftime("%Y-%m-%d") for x in d.index]
     pos = {x: i for i, x in enumerate(dates)}
@@ -106,7 +110,9 @@ def run_one(sym: str, label: str) -> dict:
 
 
 def main() -> int:
-    args = sys.argv[1:]
+    global REFRESH
+    REFRESH = "--refresh" in sys.argv
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
     syms = [(a, a) for a in args] if args else DEFAULT
     out = {
         "generated": datetime.now().strftime("%Y-%m-%d %H:%M"),
