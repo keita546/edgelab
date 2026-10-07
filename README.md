@@ -6,7 +6,7 @@
 
 **詳しい使い方は [docs/MANUAL.md](docs/MANUAL.md)。**
 
-**ダッシュボード（平日17時ごろ自動更新）: https://keita546.github.io/edgelab/**
+**ダッシュボード（毎朝6時ごろ自動更新）: https://keita546.github.io/edgelab/**
 
 > 過去データの統計的検定であり、将来の成績や特定の売買を勧めるものではありません。
 
@@ -23,7 +23,7 @@ python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
 
 ## 自動更新
 
-`.github/workflows/update.yml` が平日 17:00（日本時間）に GitHub のサーバーで `update.sh` を実行し、
+`.github/workflows/update.yml` が火〜土の 6:00（日本時間）に GitHub のサーバーで `update.sh` を実行し、前の営業日の引けまでの株価で
 GitHub Pages に公開します。パソコンの電源は不要です。手動で動かすときは Actions タブ →「毎日の更新」→ Run workflow。
 
 手元で更新するときは `./update.sh`（約6分、ログは `out/update.log`）。
