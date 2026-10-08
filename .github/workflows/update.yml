@@ -24,13 +24,19 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
           cache: pip
+      - name: 決算発表日のキャッシュを戻す（1週間ごとに取り直す）
+        uses: actions/cache@v4
+        with:
+          path: cache/earnings
+          key: earnings-${{ github.run_id }}
+          restore-keys: earnings-
       - name: ライブラリを入れる
         run: python -m venv .venv && .venv/bin/pip install -q -r requirements.txt
       - name: 株価の取得と検定（約10分）

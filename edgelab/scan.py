@@ -43,27 +43,104 @@ def fan_for(close: np.ndarray, sig: np.ndarray) -> list:
     return out
 
 
+NICE = [0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50]
+
+
+def _nice_pct(x: float) -> float:
+    """しきい値(%)を切りのよい値に丸める。"""
+    return min(NICE, key=lambda v: abs(v - x))
+
+
+def scen_for(close, sig, theta, mk, fx, earn_gap) -> list:
+    """「上がる/横ばい/下がる」の回数と、それぞれのとき外部の動きがどうだったか。
+
+    各 h について 17 個の整数:
+      N, 上がる, 横ばい, 下がる,
+      日経平均が上がった回(上がる/横ばい/下がる/全体), ドル円が上がった(円安)回(同), 決算発表をまたいだ回(同),
+      重ならない回数(保有期間が重ならないように数えた回数。差がはっきりしているかの目安)
+    決算日がない銘柄は決算の4つが None。
+    """
+    idx = np.where(sig)[0]
+    out = []
+    for hi, h in enumerate(FAN_H):
+        j = idx[idx + h < len(close)]
+        if len(j) < 5:
+            out += [None] * 17
+            continue
+        r = close[j + h] / close[j] - 1.0
+        th = theta[hi] / 100.0
+        g, b = r >= th, r <= -th
+        n_ = ~(g | b)
+        row = [int(len(j)), int(g.sum()), int(n_.sum()), int(b.sum())]
+        for flag in (mk[j + h] / mk[j] - 1.0 > 0, fx[j + h] / fx[j] - 1.0 > 0):
+            ok = np.isfinite(mk[j + h]) & np.isfinite(fx[j + h])
+            f2 = flag & ok
+            row += [int((f2 & g).sum()), int((f2 & n_).sum()), int((f2 & b).sum()), int(f2.sum())]
+        if earn_gap is None:
+            row += [None] * 4
+        else:
+            e = earn_gap[j] < h
+            row += [int((e & g).sum()), int((e & n_).sum()), int((e & b).sum()), int(e.sum())]
+        last, eff = -10**9, 0
+        for x in j:
+            if x - last >= h:
+                eff += 1; last = x
+        row.append(eff)
+        out += row
+    return out
+
+
 def _fmt_price(v: float):
     return int(round(v)) if v >= 100 else round(float(v), 1)
 
 
-def stock_fan(d: pd.DataFrame, cands) -> dict:
-    """1銘柄の予想用データ: 最新値、直近60日の終値、今日のサイン、ルール別の値動きの幅。"""
+def stock_fan(d: pd.DataFrame, cands, ext=None, earn=None) -> dict:
+    """1銘柄の予想用データ: 最新値、直近60日の終値、今日のサイン、条件別の値動きの幅とシナリオ。
+
+    ext: (日経平均, ドル円) の Series。earn: 決算発表日(ISO文字列)のリスト。
+    """
     close = d["close"].to_numpy(float)
-    fans, today, ago = [], [], []
+    base = np.ones(len(close), bool)
+    # しきい値: 条件なしで買った場合の 25%点と75%点の幅の半分くらいを、切りのよい%に丸める
+    theta = []
+    for h in FAN_H:
+        r = close[h:] / close[:-h] - 1.0 if len(close) > h else np.array([0.0])
+        q25, q75 = np.percentile(r, [25, 75])
+        theta.append(_nice_pct((abs(q25) + abs(q75)) / 2 * 100))
+    mk = fx = None
+    if ext is not None:
+        mk = ext[0].reindex(d.index).ffill().to_numpy(float)
+        fx = ext[1].reindex(d.index).ffill().to_numpy(float)
+    earn_gap = None
+    next_earn = None
+    if earn:
+        ed = np.array(sorted(pd.to_datetime(earn).values))
+        # 各日について「次の決算発表日まで何営業日あるか」(当日発表は0)
+        pos = np.searchsorted(d.index.values, ed)             # 発表日以降で最初の営業日の位置
+        nxt = np.full(len(close), 10**6)
+        for p_ in pos[::-1]:
+            if p_ < len(close):
+                nxt[:p_ + 1] = np.minimum(nxt[:p_ + 1], p_ - np.arange(p_ + 1))
+        earn_gap = nxt
+        future = [x for x in earn if x > d.index[-1].strftime("%Y-%m-%d")]
+        next_earn = future[0] if future else None
+    fans, scens, today, ago = [], [], [], []
     for c in cands:
         m = c.meta.get("mask")
         if m is None or c.family in ("時間帯", "分足"):
-            fans.append(None); today.append("0"); ago.append(None)
+            fans.append(None); scens.append(None); today.append("0"); ago.append(None)
             continue
         sig = m.reindex(d.index).fillna(False).to_numpy(bool)
         fans.append(fan_for(close, sig))
+        scens.append(scen_for(close, sig, theta, mk, fx, earn_gap) if mk is not None else None)
         today.append("1" if sig[-1] else "0")
         w = np.where(sig)[0]
         ago.append(int(len(sig) - 1 - w[-1]) if len(w) else None)
-    fans.append(fan_for(close, np.ones(len(close), bool)))     # 最後は「いつ買っても(条件なし)」
+    fans.append(fan_for(close, base))                          # 最後は「いつ買っても(条件なし)」
+    scens.append(scen_for(close, base, theta, mk, fx, earn_gap) if mk is not None else None)
     return {"p": _fmt_price(close[-1]), "d": d.index[-1].strftime("%Y-%m-%d"),
-            "h": [_fmt_price(v) for v in close[-60:]], "t": "".join(today), "ago": ago, "f": fans}
+            "h": [_fmt_price(v) for v in close[-60:]], "t": "".join(today), "ago": ago, "f": fans,
+            "s": scens, "th": theta, "ne": next_earn}
 
 
 def load_cached(symbol: str, with_reason: bool = False):
@@ -78,12 +155,12 @@ def load_cached(symbol: str, with_reason: bool = False):
 
 def _scan_chunk(args):
     """ワーカー: 銘柄のかたまりを検定し、行と日次集計を返す。"""
-    symbols, cal, cost, split, boot, rule_names = args
+    symbols, cal, cost, split, boot, rule_names, ext, earn = args
     frames = ((s, load_cached(s)) for s in symbols)
-    return scan_frames(frames, cal, cost, split, boot, rule_names, want_fan=True)
+    return scan_frames(frames, cal, cost, split, boot, rule_names, want_fan=True, ext=ext, earn=earn)
 
 
-def scan_frames(frames, cal, cost, split, boot, rule_names, want_fan=False):
+def scan_frames(frames, cal, cost, split, boot, rule_names, want_fan=False, ext=None, earn=None):
     """(銘柄, 日足) の並びを検定する。較正テストでは乱数データをここに直接渡す。"""
     pos = pd.Index(pd.to_datetime(cal))
     N = len(cal)
@@ -95,7 +172,7 @@ def scan_frames(frames, cal, cost, split, boot, rule_names, want_fan=False):
             continue
         cands = daily_hypotheses(daily_features(d))
         if want_fan:
-            fans[sym] = stock_fan(d, cands)
+            fans[sym] = stock_fan(d, cands, ext, (earn or {}).get(sym))
         cut = d.index[int(len(d) * split)]
         for c in cands:
             st = engine.candidate_stats(c, cost, cut, boot)
@@ -129,14 +206,15 @@ def scan_frames(frames, cal, cost, split, boot, rule_names, want_fan=False):
 
 
 def run(symbols: list[str], calendar: list[str], cost: float = 10.0, split: float = 0.7,
-        boot: int = 0, workers: int = 8, chunk: int = 40, log=print):
+        boot: int = 0, workers: int = 8, chunk: int = 40, log=print, ext=None, earn=None):
     # ルール名とその保有日数・測り方(先頭の銘柄から取得)
     probe = next((load_cached(s) for s in symbols if load_cached(s) is not None), None)
     proto = daily_hypotheses(daily_features(probe))
     meta = {c.name: (c.family, c.horizon, c.meta.get("basis"), c.meta.get("sign")) for c in proto}
     names = list(meta)
 
-    tasks = [(symbols[i:i + chunk], calendar, cost, split, boot, names) for i in range(0, len(symbols), chunk)]
+    tasks = [(symbols[i:i + chunk], calendar, cost, split, boot, names, ext,
+              {s: (earn or {}).get(s) for s in symbols[i:i + chunk]}) for i in range(0, len(symbols), chunk)]
     rows, total, fans = [], {nm: np.zeros((8, len(calendar))) for nm in names}, {}
     with ProcessPoolExecutor(max_workers=workers) as ex:
         for k, (r, agg, fn) in enumerate(ex.map(_scan_chunk, tasks), 1):

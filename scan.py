@@ -21,9 +21,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from edgelab import data, scan, universe
+from edgelab import data, events, scan, universe
 from edgelab.hypotheses import daily_features, daily_hypotheses
-from edgelab.rules_doc import describe
+from edgelab.rules_doc import cond_label, describe
 
 ROOT = Path(__file__).parent
 VCODE = {"有望(要追試)": "P", "FDR通過・DSR不足": "N", "IS/OOS不一致": "N", "FDR通過・OOS不足": "N",
@@ -88,6 +88,7 @@ def main() -> int:
     ap.add_argument("--boot", type=int, default=0, help="銘柄別の信頼区間のブートストラップ回数(0で省略、多いと遅い)")
     ap.add_argument("--sim", choices=["auto", "yes", "no"], default="auto", help="シミュレーター用データ(既定: 150銘柄以下なら出す)")
     ap.add_argument("--refresh", action="store_true")
+    ap.add_argument("--no-earnings", action="store_true", help="決算発表日を取得しない(速いがシナリオに決算が出ない)")
     a = ap.parse_args()
     t0 = time.time()
 
@@ -109,7 +110,9 @@ def main() -> int:
     print(f"  検定する銘柄 {len(syms)} / {len(u)}　営業日 {len(calendar)}（{calendar[0]}〜{calendar[-1]}）")
     print(f"  除外: {excluded}　不連続以降のみ使用: {trimmed} 銘柄")
 
-    df, pooled, meta, fans = scan.run(syms, calendar, cost=a.cost, boot=a.boot, workers=a.workers)
+    ext = events.market_series(years=a.years, refresh=a.refresh)
+    earn = events.earnings_dates(syms) if not a.no_earnings else {}
+    df, pooled, meta, fans = scan.run(syms, calendar, cost=a.cost, boot=a.boot, workers=a.workers, ext=ext, earn=earn)
     names = list(meta)
     print(f"  検定 {len(df):,} 通り　補正後 p<0.05 かつプラス: {int(((df['FDR補正p'] < .05) & (df['平均(bps)'] > 0)).sum())}　"
           f"全関門: {int((df['判定'] == '有望(要追試)').sum())}　({time.time() - t0:.0f}秒)")
@@ -138,9 +141,10 @@ def main() -> int:
         fan = fans.get(s)
         stocks.append({"c": code, "n": info.loc[s, "name"], "s": info.loc[s, "sector"], "m": info.loc[s, "market"],
                        "z": info.loc[s, "size"], "v": "".join(VCODE.get(v, "-") for v in g["判定"]), "mu": mean,
-                       "k": k, "sim": bool(want_sim), "t": fan["t"] if fan else "", "p": fan["p"] if fan else None})
+                       "k": k, "k2": code[:2], "sim": bool(want_sim), "t": fan["t"] if fan else "",
+                       "p": fan["p"] if fan else None, "ne": fan["ne"] if fan else None})
         if fan:
-            fchunks.setdefault(k, {})[code] = fan
+            fchunks.setdefault(code[:2], {})[code] = fan
     for k, obj in chunks.items():
         (out / f"detail_{k}.json").write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")))
     for k, obj in fchunks.items():
@@ -175,6 +179,7 @@ def main() -> int:
         "pass": int((df["判定"] == "有望(要追試)").sum()),
         "rules": rules, "stocks": stocks, "detailCols": DETAIL_COLS,
         "fanH": scan.FAN_H, "fanQ": scan.FAN_Q, "lastDate": calendar[-1],
+        "conds": [{"i": i, "label": cond_label(n)} for i, n in enumerate(names) if cond_label(n)],
     }
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, separators=(",", ":")))
     size = sum(p.stat().st_size for p in out.rglob("*.json")) / 1e6
